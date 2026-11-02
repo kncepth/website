@@ -19,6 +19,34 @@
 	);
 	const compact = new Intl.NumberFormat('en', { notation: 'compact' });
 
+	/** How many cards a page of the gallery holds, three full rows at the widest layout. */
+	const PAGE_SIZE = 12;
+
+	let query = $state('');
+	/** The page shown, counted from 0. */
+	let current = $state(0);
+	let top: HTMLElement | undefined = $state();
+
+	/** The themes whose name, variant names or authors contain every word of the query. */
+	const found = $derived.by(() => {
+		const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+		if (!words.length) return sorted;
+		return sorted.filter((theme) => {
+			const text = [theme.name, ...theme.authors, ...theme.variants.map((v) => v.name)]
+				.join(' ')
+				.toLowerCase();
+			return words.every((word) => text.includes(word));
+		});
+	});
+	const pages = $derived(Math.max(1, Math.ceil(found.length / PAGE_SIZE)));
+	const shown = $derived(found.slice(current * PAGE_SIZE, (current + 1) * PAGE_SIZE));
+
+	/** Shows page `index` and scrolls back up to the search field. */
+	function go(index: number) {
+		current = Math.min(Math.max(index, 0), pages - 1);
+		top?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+	}
+
 	onMount(async () => {
 		try {
 			const res = await fetch('/api/themes/downloads');
@@ -57,8 +85,23 @@
 			</p>
 		</header>
 
+		<label class="search" bind:this={top}>
+			<Glyph name="search" size={14} />
+			<input
+				type="search"
+				placeholder="Search themes or authors"
+				aria-label="Search themes"
+				bind:value={query}
+				oninput={() => (current = 0)}
+			/>
+		</label>
+
+		{#if !found.length}
+			<p class="empty">No theme matches "{query.trim()}".</p>
+		{/if}
+
 		<ul class="grid">
-			{#each sorted as theme (theme.id)}
+			{#each shown as theme (theme.id)}
 				<ThemeCard tag="li" name={theme.name} authors={theme.authors} variants={theme.variants}>
 					{#snippet meta()}
 						{#if downloads}
@@ -87,6 +130,39 @@
 				</ThemeCard>
 			{/each}
 		</ul>
+
+		{#if pages > 1}
+			<nav class="pager" aria-label="Pages">
+				<button
+					type="button"
+					class="btn btn-secondary"
+					aria-label="Previous page"
+					disabled={current === 0}
+					onclick={() => go(current - 1)}
+				>
+					<Glyph name="chevron-left" />
+				</button>
+				{#each { length: pages }, index (index)}
+					<button
+						type="button"
+						class="btn {index === current ? 'btn-primary' : 'btn-secondary'}"
+						aria-current={index === current ? 'page' : undefined}
+						onclick={() => go(index)}
+					>
+						{index + 1}
+					</button>
+				{/each}
+				<button
+					type="button"
+					class="btn btn-secondary"
+					aria-label="Next page"
+					disabled={current === pages - 1}
+					onclick={() => go(current + 1)}
+				>
+					<Glyph name="chevron-right" />
+				</button>
+			</nav>
+		{/if}
 
 		<div class="source">
 			<EditLink path="src/routes/themes/+page.svelte" />
@@ -125,6 +201,44 @@
 		text-underline-offset: 3px;
 	}
 
+	.search {
+		scroll-margin-top: calc(var(--header) + 24px);
+		max-width: 360px;
+		height: 40px;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 24px;
+		padding: 0 12px;
+		border: 1px solid var(--border);
+		border-radius: var(--radius);
+		color: var(--dim);
+	}
+
+	.search:focus-within {
+		border-color: var(--muted-fg);
+	}
+
+	.search input {
+		flex: 1;
+		min-width: 0;
+		border: 0;
+		outline: 0;
+		background: none;
+		color: var(--fg);
+		font: inherit;
+		font-size: 14px;
+	}
+
+	.search input::placeholder {
+		color: var(--dim);
+	}
+
+	.empty {
+		font-size: 14px;
+		color: var(--muted-fg);
+	}
+
 	.grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -142,6 +256,25 @@
 		font-size: 12px;
 		font-variant-numeric: tabular-nums;
 		color: var(--muted-fg);
+	}
+
+	.pager {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 8px;
+		margin-top: 40px;
+	}
+
+	.pager .btn {
+		min-width: 40px;
+		padding: 0 12px;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.pager .btn:disabled {
+		opacity: 0.4;
+		pointer-events: none;
 	}
 
 	.source {
