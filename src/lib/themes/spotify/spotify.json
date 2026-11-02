@@ -1,0 +1,29 @@
+{
+	"name": "Spotify Dark",
+	"author": "ilikecheseee123-rgb",
+	"version": 1,
+	"theme": {
+		"background": "#121212",
+		"foreground": "#ffffff",
+		"sidebar": "#000000",
+		"sidebar_accent": "#1a1a1a",
+		"sidebar_border": "#282828",
+		"popover": "#181818",
+		"popover_foreground": "#ffffff",
+		"secondary": "#282828",
+		"secondary_hover": "#3e3e3e",
+		"secondary_active": "#535353",
+		"muted": "#282828",
+		"muted_foreground": "#b3b3b3",
+		"border": "#282828",
+		"primary": "#1ed760",
+		"primary_foreground": "#000000",
+		"primary_hover": "#3fe07d",
+		"progress_bar": "#1ed760",
+		"selection": "#1ed76033",
+		"danger": "#e91429",
+		"danger_foreground": "#ffffff",
+		"table_active": "#2a2a2a",
+		"table_active_border": "#1ed760"
+	}
+}
