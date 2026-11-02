@@ -108,6 +108,20 @@
 	With <strong>Adaptive theme</strong> on, only System, Dark and Light are available. It is off by default.
 </p>
 
+<h2 id="community">Community themes</h2>
+<p>
+	Browse themes people shared on the <a href="/themes">themes page</a>, or open it with
+	<MenuPath steps={['Settings', 'Appearance', 'Theme', 'Explore community themes']} />. Press
+	<strong>Install</strong> on a theme and Sonora shows a preview and asks before adding it to your
+	themes folder. A theme with variants installs with all of them. <strong>Download</strong> saves the
+	file, or a zip for a theme with variants, to put in the folder yourself.
+</p>
+<p>
+	To remove a theme from your themes folder, press the trash button on its card in
+	<MenuPath steps={['Settings', 'Appearance', 'Theme']} />. To share your own, see
+	<a href="#format">Writing a theme</a> and <a href="/themes/submit">submit it</a>.
+</p>
+
 <h2 id="folder">The themes folder</h2>
 <p>
 	Open it with <MenuPath steps={['Settings', 'Appearance', 'Theme', 'Open folder']} />. It is next
@@ -192,7 +206,8 @@
 <h2 id="legacy">Legacy themes</h2>
 <p>
 	Midnight, Forest, Ocean, Rose, Lavender and Amber are no longer built in since v0.44.0. If one of
-	them was selected when you updated, it was copied to your themes folder and is still selected. The
-	others are in <a href="{repo}/tree/main/themes/legacy"><code>themes/legacy</code></a> in Sonora's repository.
-	Copy a file into your themes folder to use it.
+	them was selected when you updated, it was copied to your themes folder and is still selected.
+	Midnight, Forest, Ocean, Lavender and Amber are on the <a href="/themes">themes page</a>, ready to
+	install. Rose is in <a href="{repo}/tree/main/themes/legacy"><code>themes/legacy</code></a> in Sonora's
+	repository. Copy it into your themes folder to use it.
 </p>

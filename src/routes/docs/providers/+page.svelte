@@ -55,9 +55,10 @@
 	this off, use <MenuPath steps={['Settings', 'Playback', 'Show as a Spotify device']} />.
 </p>
 <p>
-	The devices button in the player bar switches playback to another Spotify device and back. It also
-	has <strong>Start a Jam</strong> and <strong>Join a Jam</strong>. To hide Sonora's Discord status
-	while Spotify Connect plays, turn on
+	The Sessions button in the player bar switches playback to another Spotify device and back. While
+	another device plays, the button shows that device's icon. Jams are in its
+	<strong>Spotify Jams</strong> submenu, see <a href="/docs/sessions#spotify-jams">Sessions</a>. To
+	hide Sonora's Discord status while Spotify Connect plays, turn on
 	<MenuPath steps={['Settings', 'Integrations', 'Discord', 'Hide during Spotify Connect']} />.
 </p>
 
@@ -111,8 +112,18 @@
 		matches the artist, using <code>artist.*</code>, <code>folder.*</code> or
 		<code>cover.*</code> in those formats.
 	</li>
-	<li>Lyrics come from a <code>.lrc</code> file next to the track, or from the tags.</li>
+	<li>
+		Lyrics come from a <code>.ttml</code> or <code>.lrc</code> file next to the track, or from the tags.
+	</li>
 </ul>
+
+<h3 id="local-playlists">Importing and exporting playlists</h3>
+<p>
+	Import an M3U or M3U8 file with <strong>Import playlist…</strong> on your local Playlists page,
+	from its button or right-click menu. Songs that aren't in your library are left out. To export a
+	local playlist, right-click it and choose <strong>Export playlist…</strong>. An export saved next
+	to your music lists songs by relative path.
+</p>
 
 <h3 id="local-tags">Editing tags</h3>
 <p>
@@ -125,9 +136,9 @@
 <h3 id="local-lyrics">Local lyrics</h3>
 <p>
 	Enable <strong>Local</strong> under <MenuPath steps={['Settings', 'Lyrics', 'Lyrics sources']} /> to
-	use lyrics from a track's tags or a matching <code>.lrc</code> file. Drag the sources to rank them.
-	Word-by-word lyrics come first, then line-synced, then plain text. Within each kind, the higher source
-	wins.
+	use lyrics from a track's tags or a matching <code>.ttml</code> or <code>.lrc</code> file. TTML files
+	and TTML in the lyrics tag can be timed word by word. Drag the sources to rank them. Synced lyrics beat
+	plain text, and among synced lyrics the higher source wins, even when a lower one has them word by word.
 </p>
 <p>
 	To keep your local track metadata off online lyrics services, turn off

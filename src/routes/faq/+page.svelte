@@ -112,7 +112,9 @@
 					<p>With Nix, run the flake at its <code>nightly</code> tag.</p>
 					<Code text="nix run github:sonorahq/sonora/nightly" />
 					<p>
-						A nightly AppImage updates to the next nightly, not to a release. Nightlies skip the
+						If Sonora updates itself, as the Windows installer, the macOS disk image and the
+						AppImage do, switch between releases and nightlies with
+						<MenuPath steps={['Settings', 'About', 'Release channel']} />. Nightlies skip the
 						testing a release gets, so say you're on one when you report a bug.
 					</p>
 				</Question>
