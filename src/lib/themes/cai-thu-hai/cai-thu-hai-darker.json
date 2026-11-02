@@ -1,0 +1,29 @@
+{
+	"name": "Darker",
+	"author": "ilikecheseee123-rgb",
+	"version": 1,
+	"theme": {
+		"background": "#030408",
+		"foreground": "#cbd5e1",
+		"sidebar": "#05070c",
+		"sidebar_accent": "#090d16",
+		"sidebar_border": "#111827",
+		"popover": "#060810",
+		"popover_foreground": "#cbd5e1",
+		"secondary": "#090d16",
+		"secondary_hover": "#111827",
+		"secondary_active": "#1f293d",
+		"muted": "#090d16",
+		"muted_foreground": "#64748b",
+		"border": "#111827",
+		"primary": "#2563eb",
+		"primary_foreground": "#ffffff",
+		"primary_hover": "#3b82f6",
+		"progress_bar": "#2563eb",
+		"selection": "#2563eb33",
+		"danger": "#ef4444",
+		"danger_foreground": "#ffffff",
+		"table_active": "#090d16",
+		"table_active_border": "#2563eb"
+	}
+}

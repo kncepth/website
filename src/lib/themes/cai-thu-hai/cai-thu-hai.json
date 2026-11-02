@@ -1,0 +1,29 @@
+{
+	"name": "Cai Thu Hai",
+	"author": "ilikecheseee123-rgb",
+	"version": 1,
+	"theme": {
+		"background": "#060913",
+		"foreground": "#e2e8f0",
+		"sidebar": "#0b1220",
+		"sidebar_accent": "#141c30",
+		"sidebar_border": "#1e293b",
+		"popover": "#090e1a",
+		"popover_foreground": "#e2e8f0",
+		"secondary": "#141c30",
+		"secondary_hover": "#1e293b",
+		"secondary_active": "#2a3655",
+		"muted": "#141c30",
+		"muted_foreground": "#64748b",
+		"border": "#1e293b",
+		"primary": "#3b82f6",
+		"primary_foreground": "#ffffff",
+		"primary_hover": "#60a5fa",
+		"progress_bar": "#3b82f6",
+		"selection": "#3b82f633",
+		"danger": "#ef4444",
+		"danger_foreground": "#ffffff",
+		"table_active": "#141c30",
+		"table_active_border": "#3b82f6"
+	}
+}
