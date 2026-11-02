@@ -1,0 +1,29 @@
+{
+	"name": "Lighter",
+	"author": "ilikecheseee123-rgb",
+	"version": 1,
+	"theme": {
+		"background": "#0d1527",
+		"foreground": "#f1f5f9",
+		"sidebar": "#121d33",
+		"sidebar_accent": "#1e293b",
+		"sidebar_border": "#334155",
+		"popover": "#16223b",
+		"popover_foreground": "#f1f5f9",
+		"secondary": "#1e293b",
+		"secondary_hover": "#334155",
+		"secondary_active": "#475569",
+		"muted": "#1e293b",
+		"muted_foreground": "#94a3b8",
+		"border": "#334155",
+		"primary": "#60a5fa",
+		"primary_foreground": "#090d16",
+		"primary_hover": "#93c5fd",
+		"progress_bar": "#60a5fa",
+		"selection": "#60a5fa33",
+		"danger": "#ef4444",
+		"danger_foreground": "#ffffff",
+		"table_active": "#1e293b",
+		"table_active_border": "#60a5fa"
+	}
+}
