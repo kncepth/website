@@ -34,9 +34,19 @@ export const groups: { label: string; pages: DocPage[] }[] = [
 				summary: 'Output device, sample rate and buffer, and the parametric equalizer.'
 			},
 			{
+				slug: 'sessions',
+				title: 'Sessions',
+				summary: 'Listening with friends through Sonora Sessions and Spotify Jams.'
+			},
+			{
 				slug: 'shortcuts',
 				title: 'Shortcuts',
 				summary: 'Every keyboard shortcut, including the ones that only exist on macOS.'
+			},
+			{
+				slug: 'command-line',
+				title: 'Command line',
+				summary: 'Controlling Sonora from a terminal, a script or a status bar.'
 			},
 			{
 				slug: 'scrobbling',
@@ -56,7 +66,7 @@ export const groups: { label: string; pages: DocPage[] }[] = [
 			{
 				slug: 'themes',
 				title: 'Themes',
-				summary: 'The themes Sonora ships, and writing your own as a JSON file.'
+				summary: 'Installing community themes, and writing your own as a JSON file.'
 			}
 		]
 	},

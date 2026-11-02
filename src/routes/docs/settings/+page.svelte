@@ -84,8 +84,8 @@
 <h2 id="not-here">What isn't in the file</h2>
 <p>
 	The selected provider, volume, queue resume position, window layout and other runtime state are
-	saved in <code>state.sqlite</code>. Provider sign-in credentials live in separate files in the
-	cache folder. Linked scrobbling accounts, including their tokens and secrets, are stored in
+	saved in <code>state.sqlite</code>. Provider sign-ins live in the <code>accounts</code> folder in
+	the data folder. Linked scrobbling accounts, including their tokens and secrets, are stored in
 	<code>settings.json</code>.
 </p>
 
@@ -98,19 +98,19 @@
 		<tr>
 			<td>Data</td>
 			<td>
-				<code>state.sqlite</code> and <a href="/docs/downloads">downloads</a>, in
+				<code>state.sqlite</code>, <a href="/docs/downloads">downloads</a> and provider sign-ins in
+				<code>accounts</code>, in
 				<code>~/.local/share/sonora</code>,
 				<code>~/Library/Application Support/sonora</code> or <code>%LOCALAPPDATA%\sonora</code>.
+				Deleting a provider's folder in <code>accounts</code> signs you out of it.
 			</td>
 		</tr>
 		<tr>
 			<td>Cache</td>
 			<td>
-				Sign-in credentials, the Widevine module, cached lyrics, artwork and played tracks, and the
-				local scan index, in
+				The Widevine module, cached lyrics, artwork and played tracks, and the local scan index, in
 				<code>~/.cache/sonora</code>, <code>~/Library/Caches/sonora</code> or
-				<code>%LOCALAPPDATA%\sonora</code>. Removing provider credential files signs you out of
-				those providers.
+				<code>%LOCALAPPDATA%\sonora</code>. Emptying it doesn't sign you out.
 			</td>
 		</tr>
 	</tbody>
@@ -118,7 +118,8 @@
 
 <p class="note">
 	On Windows, data and cache share the same folder. Deleting the whole folder also removes
-	<code>state.sqlite</code>, including local playlists and favorites, and every song you downloaded.
+	<code>state.sqlite</code>, including local playlists and favorites, every song you downloaded and
+	your sign-ins.
 </p>
 
 <h2 id="home-manager">Home Manager</h2>

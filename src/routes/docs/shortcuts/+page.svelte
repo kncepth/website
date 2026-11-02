@@ -75,11 +75,18 @@
 	<kbd>Alt</kbd> is <kbd>⌥</kbd>.
 </p>
 
-<p class="note">You can't rebind anything yet. Custom shortcuts are on the way.</p>
+<p class="note">
+	You can't rebind anything yet. Custom shortcuts are on the way. For keys that work outside Sonora,
+	bind <a href="/docs/command-line">command line</a> commands in your desktop's settings.
+</p>
 <p>
 	Playback shortcuts work while the app has focus and you aren't typing in a text field. In a text
-	field, <kbd>Space</kbd> types a space and <kbd>Ctrl</kbd> with the arrow keys moves through words. List
-	shortcuts act on the focused list or table.
+	field, <kbd>Space</kbd> types a space, <kbd>Ctrl</kbd> with the arrow keys moves through words and
+	<kbd>Esc</kbd> leaves the field. List shortcuts act on the focused list or table.
+</p>
+<p>
+	In Search, <kbd>↓</kbd> in the empty field lists your recent searches and <kbd>Enter</kbd> opens
+	the full results. The first <kbd>Esc</kbd> closes the suggestions and the second leaves the field.
 </p>
 <p>
 	Double-clicking the fullscreen player does the same as <kbd>F11</kbd>. To have every way into the

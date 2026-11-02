@@ -17,7 +17,12 @@
 <p>
 	Press the download button on an album or playlist page, or right-click songs and choose
 	<strong>Download</strong>. Works with Spotify, YouTube Music, Tidal, Deezer, Apple Music and
-	Subsonic. Dismiss the progress toast to cancel.
+	Subsonic.
+</p>
+<p>
+	While songs download, the title bar shows how many are left. Click the count to see them, grouped
+	under the album, playlist or pick they came from, and cancel any one of them. The cross next to
+	the count cancels every download. A song the service won't serve is skipped.
 </p>
 <p>
 	To delete a download, right-click it and choose <strong>Remove download</strong>. The
