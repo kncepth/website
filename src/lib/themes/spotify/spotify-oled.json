@@ -1,0 +1,29 @@
+{
+	"name": "Spotify OLED",
+	"author": "ilikecheseee123-rgb",
+	"version": 1,
+	"theme": {
+		"background": "#000000",
+		"foreground": "#ffffff",
+		"sidebar": "#050505",
+		"sidebar_accent": "#121212",
+		"sidebar_border": "#1f1f1f",
+		"popover": "#0a0a0a",
+		"popover_foreground": "#ffffff",
+		"secondary": "#181818",
+		"secondary_hover": "#282828",
+		"secondary_active": "#383838",
+		"muted": "#181818",
+		"muted_foreground": "#a0a0a0",
+		"border": "#1f1f1f",
+		"primary": "#1ed760",
+		"primary_foreground": "#000000",
+		"primary_hover": "#3fe07d",
+		"progress_bar": "#1ed760",
+		"selection": "#1ed76044",
+		"danger": "#ff3b30",
+		"danger_foreground": "#ffffff",
+		"table_active": "#141414",
+		"table_active_border": "#1ed760"
+	}
+}

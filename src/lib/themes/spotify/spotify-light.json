@@ -1,0 +1,29 @@
+{
+	"name": "Spotify Light",
+	"author": "ilikecheseee123-rgb",
+	"version": 1,
+	"theme": {
+		"background": "#f2f2f2",
+		"foreground": "#121212",
+		"sidebar": "#e8e8e8",
+		"sidebar_accent": "#dcdcdc",
+		"sidebar_border": "#d0d0d0",
+		"popover": "#f2f2f2",
+		"popover_foreground": "#121212",
+		"secondary": "#e2e2e2",
+		"secondary_hover": "#d5d5d5",
+		"secondary_active": "#c8c8c8",
+		"muted": "#e4e4e4",
+		"muted_foreground": "#5a5a5a",
+		"border": "#d8d8d8",
+		"primary": "#1db954",
+		"primary_foreground": "#ffffff",
+		"primary_hover": "#1ed760",
+		"progress_bar": "#1db954",
+		"selection": "#1db95433",
+		"danger": "#e91429",
+		"danger_foreground": "#ffffff",
+		"table_active": "#e4e4e4",
+		"table_active_border": "#1db954"
+	}
+}
