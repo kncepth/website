@@ -1,0 +1,21 @@
+{
+	"name": "Completely Dark",
+	"author": "tide",
+	"version": 1,
+	"theme": {
+		"background": "#000000",
+		"foreground": "#FFFFFF",
+		"sidebar": "#000000",
+		"popover": "#101010",
+		"secondary": "#000000",
+		"muted": "#121212",
+		"muted_foreground": "#BFBFBF",
+		"border": "#FFFFFF",
+		"primary": "#FFFFFF",
+		"primary_foreground": "#000000",
+		"progress_bar": "#FFFFFF",
+		"selection": "#303030",
+		"table_active": "#FFFFFF18",
+		"table_active_border": "#666666"
+	}
+}
