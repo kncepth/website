@@ -18,7 +18,7 @@
 					<Logo size={18} />
 					<span>Sonora</span>
 				</a>
-				<p>A native music streaming client, written in Rust with GPUI.</p>
+				<p>A native, familiar music streaming client.</p>
 			</div>
 
 			<div class="links">
