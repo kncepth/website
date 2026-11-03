@@ -202,12 +202,3 @@
 	instead of writing a file. Overrides apply on top of any theme, including the adaptive tint.
 </p>
 <Code label="settings.json" lang="json" text={overrides} />
-
-<h2 id="legacy">Legacy themes</h2>
-<p>
-	Midnight, Forest, Ocean, Rose, Lavender and Amber are no longer built in since v0.44.0. If one of
-	them was selected when you updated, it was copied to your themes folder and is still selected.
-	Midnight, Forest, Ocean, Lavender and Amber are on the <a href="/themes">themes page</a>, ready to
-	install. Rose is in <a href="{repo}/tree/main/themes/legacy"><code>themes/legacy</code></a> in Sonora's
-	repository. Copy it into your themes folder to use it.
-</p>
