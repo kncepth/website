@@ -121,6 +121,15 @@
 		color: var(--m-primary-foreground);
 	}
 
+	.destructive {
+		background: var(--m-danger);
+		color: var(--m-danger-foreground);
+	}
+
+	.destructive:hover {
+		background: var(--m-danger-hover);
+	}
+
 	.filled:hover {
 		background: var(--m-primary-hover);
 	}

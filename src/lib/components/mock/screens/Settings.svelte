@@ -20,6 +20,7 @@
 	} from '$lib/mock/catalog';
 	import { accounts } from '$lib/mock/accounts.svelte';
 	import { equalizer, presets, profiles } from '$lib/mock/equalizer.svelte';
+	import { installed } from '$lib/mock/installed.svelte';
 	import { menu } from '$lib/mock/menu.svelte';
 	import { reach } from '$lib/mock/packs.svelte';
 	import { settings } from '$lib/mock/settings.svelte';
@@ -149,6 +150,7 @@
 
 	function open(row: Row) {
 		if (row.opens === 'equalizer') return onequalizer?.();
+		if (row.opens === 'community') return installed.browse(true);
 		if (row.opens && drills[row.opens]) drill = row.opens;
 	}
 
@@ -220,7 +222,7 @@
 
 	/** The variant a family's card shows: the chosen one, the one last chosen in it, else the
 	 *  first dark one, as the desktop picks for a dark system appearance. */
-	const variantOf = (family: (typeof families)[number]) =>
+	const variantOf = (family: { id: string; label: string; variants: string[] }) =>
 		family.variants.includes(String(settings.theme))
 			? String(settings.theme)
 			: (remembered[family.id] ?? family.variants.find((name) => dim(name)) ?? family.variants[0]);
@@ -229,10 +231,10 @@
 
 	/** The palettes a card slices its miniature into: System's dark and light, a family's first
 	 *  four variants, or a built-in theme's own. */
-	const slicesOf = (family: (typeof families)[number]) =>
+	const slicesOf = (family: { id: string; label: string; variants: string[] }) =>
 		family.id === 'system' ? ['Dark', 'Light'] : family.variants.slice(0, SLICES);
 
-	function variants(family: (typeof families)[number], trigger: Element) {
+	function variants(family: { id: string; variants: string[] }, trigger: Element) {
 		menu.from(
 			trigger,
 			`variants-${family.id}`,
@@ -320,7 +322,10 @@
 		>
 			<span class="title">{entry.title}</span>
 			{#if entry.value}<span class="reading">{entry.value}</span>{/if}
-			<Icon name={entry.href ? 'external-link' : 'chevron-right'} size={14} />
+			<Icon
+				name={entry.href || entry.opens === 'community' ? 'external-link' : 'chevron-right'}
+				size={14}
+			/>
 		</svelte:element>
 	{:else}
 		<div class="row">
@@ -430,7 +435,7 @@
 				>
 			{/if}
 			<div class="theme-rail" bind:this={rail} onscroll={measureRail} use:watch={measureRail}>
-				{#each families as family (family.id)}
+				{#each [...families, ...installed.families] as family (family.id)}
 					{@const shown = variantOf(family)}
 					{@const chosen = family.variants.includes(String(settings.theme))}
 					{@const locked = settings.adaptive && !builtIn(family.id)}
@@ -460,6 +465,16 @@
 								</span>
 							{/each}
 						</button>
+						{#if 'installed' in family}
+							<button
+								type="button"
+								class="trash"
+								title="Delete theme"
+								aria-label="Delete theme"
+								onclick={() => installed.confirmDelete(family.id)}
+								><Icon name="trash-2" size={14} /></button
+							>
+						{/if}
 						<button
 							type="button"
 							class="name"
@@ -1600,6 +1615,38 @@
 		background: none;
 		color: var(--m-muted-foreground);
 		cursor: pointer;
+	}
+
+	.theme-card {
+		position: relative;
+	}
+
+	.trash {
+		position: absolute;
+		top: 6px;
+		right: 6px;
+		z-index: 1;
+		display: flex;
+		width: 26px;
+		height: 26px;
+		align-items: center;
+		justify-content: center;
+		border: 1px solid var(--m-border);
+		border-radius: var(--m-radius);
+		background: var(--m-popover);
+		color: var(--m-muted-foreground);
+		opacity: 0;
+		cursor: pointer;
+		transition: opacity 140ms ease;
+	}
+
+	.theme-card:hover .trash,
+	.trash:focus-visible {
+		opacity: 1;
+	}
+
+	.trash:hover {
+		color: var(--m-foreground);
 	}
 
 	.theme-card .thumb.dashed {

@@ -15,6 +15,7 @@
 	import Members from './Members.svelte';
 	import Menu from './Menu.svelte';
 	import SessionDialogs from './SessionDialogs.svelte';
+	import ThemeDialogs from './ThemeDialogs.svelte';
 	import Fullscreen from './Fullscreen.svelte';
 	import Grip from './Grip.svelte';
 	import Detail from './Detail.svelte';
@@ -233,6 +234,7 @@
 				<PlayerBar bind:tab onfullscreen={() => (full = true)} />
 			{/if}
 			<SessionDialogs />
+			<ThemeDialogs />
 			<Menu width={WIDTH} height={HEIGHT} />
 		</div>
 	</div>

@@ -270,3 +270,33 @@ export function colorsOf(theme: string): Record<string, string> {
 	const source = palettes[kind === 'system' ? 'dark' : kind];
 	return Object.fromEntries(source.split(' ').map((color, at) => [FIELDS[at], `#${color}`]));
 }
+
+/** Turns a colour the community gallery gives, `rgb(r g b / a)` or hex, into palette hex. */
+function hex(color: string): string {
+	if (color.startsWith('#')) return color.slice(1);
+	const [red, green, blue, alpha = '1'] = color.match(/[\d.]+/g) ?? ['0', '0', '0'];
+	const byte = (value: number) =>
+		Math.round(Math.min(Math.max(value, 0), 255))
+			.toString(16)
+			.padStart(2, '0');
+	const opacity = Math.round(Number(alpha) * 255);
+	return (
+		byte(Number(red)) +
+		byte(Number(green)) +
+		byte(Number(blue)) +
+		(opacity < 255 ? byte(opacity) : '')
+	);
+}
+
+/** Adds a theme file the listener installed, named `title`, so the mock can paint with it. */
+export function addPalette(title: string, colors: Record<string, string>) {
+	const id = `installed:${title}`;
+	palettes[id] = FIELDS.map((field) => hex(colors[field] ?? darkColors[field])).join(' ');
+	kinds[title] = id;
+}
+
+/** Forgets an installed theme file again. */
+export function removePalette(title: string) {
+	delete palettes[kinds[title]];
+	delete kinds[title];
+}

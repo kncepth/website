@@ -401,9 +401,8 @@ const appearance: Section = {
 					key: 'community',
 					title: 'Explore community themes',
 					detail: 'Find themes other people made and install them in one click',
-					control: 'button',
-					label: 'Open',
-					href: '/themes'
+					control: 'drill',
+					opens: 'community'
 				}
 			]
 		},
