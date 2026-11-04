@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { menu } from '$lib/mock/menu.svelte';
+	import { trackMenu } from '$lib/mock/menus';
 	import { shelf } from '$lib/mock/album';
 	import { listenAgain, quickPicks } from '$lib/mock/screens';
 	import { player } from '$lib/mock/player.svelte';
@@ -62,6 +64,8 @@
 							playing={player.id === track.id && player.playing}
 							onplay={() => player.select(track.id)}
 							onpress={() => player.select(track.id)}
+							oncontext={(event: MouseEvent) =>
+								menu.at(event, `track-${track.id}`, () => trackMenu(track))}
 						/>
 					{/each}
 				</div>
@@ -103,6 +107,8 @@
 					playing={player.id === track.id && player.playing}
 					onplay={() => player.select(track.id)}
 					onpress={() => player.select(track.id)}
+					oncontext={(event: MouseEvent) =>
+						menu.at(event, `track-${track.id}`, () => trackMenu(track))}
 				/>
 			{/each}
 		</div>

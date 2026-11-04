@@ -2,7 +2,10 @@
 	import { clock } from '$lib/mock/album';
 	import { libraryColumns, playlists } from '$lib/mock/screens';
 	import { player } from '$lib/mock/player.svelte';
+	import { menu } from '$lib/mock/menu.svelte';
+	import { playlistMenu } from '$lib/mock/menus';
 	import Control from '../Control.svelte';
+	import HeroDownload from '../HeroDownload.svelte';
 	import PageHero from '../PageHero.svelte';
 	import Table from '../Table.svelte';
 
@@ -29,11 +32,17 @@
 				<Control
 					variant="filled"
 					icon={holding ? 'pause' : 'play'}
-					label={holding ? 'Pause' : mine ? 'Resume' : 'Play playlist'}
+					label={holding ? 'Pause' : 'Play'}
+					wide
 					onclick={() => {
 						if (holding) player.pause();
 						else if (mine) player.resume();
-						else player.select(rows[0].id);
+						else
+							player.play(
+								rows.map((track) => track.id),
+								list.name,
+								'Playlist'
+							);
 					}}
 				/>
 				<Control
@@ -42,14 +51,24 @@
 					title="Shuffle"
 					onclick={() => player.playShuffled()}
 				/>
-				<Control
-					variant="outline"
-					icon={player.saved ? 'heart-filled' : 'heart'}
-					title={player.saved ? 'Remove from library' : 'Add to library'}
-					tint={player.saved ? 'primary' : ''}
-					onclick={() => player.toggleSaved()}
+				<HeroDownload
+					job={{
+						key: `playlist-${list.id}`,
+						subject: 'Playlist',
+						name: list.name,
+						cover: list.cover
+					}}
+					ids={rows.map((track) => track.id)}
 				/>
-				<Control icon="ellipsis" title="More" />
+				<Control
+					icon="ellipsis"
+					title="More"
+					selected={menu.owner === `hero-${list.id}`}
+					onclick={(event: MouseEvent) =>
+						menu.from(event.currentTarget as Element, `hero-${list.id}`, () =>
+							playlistMenu(list.id)
+						)}
+				/>
 			{/snippet}
 		</PageHero>
 	</div>

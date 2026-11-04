@@ -24,6 +24,7 @@
 		underline = false,
 		onplay = undefined,
 		onpress = undefined,
+		oncontext = undefined,
 		action = undefined
 	}: {
 		title?: string;
@@ -46,6 +47,7 @@
 		underline?: boolean;
 		onplay?: (event: Event) => void;
 		onpress?: (event: Event) => void;
+		oncontext?: (event: MouseEvent) => void;
 		action?: Snippet;
 	} = $props();
 
@@ -69,6 +71,7 @@
 	role="button"
 	tabindex="0"
 	onclick={onpress}
+	oncontextmenu={oncontext}
 	onkeydown={(event) => {
 		if (!onpress) return;
 		if (event.key === 'Enter' || event.key === ' ') {

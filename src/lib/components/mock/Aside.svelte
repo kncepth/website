@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { menu } from '$lib/mock/menu.svelte';
+	import { trackMenu } from '$lib/mock/menus';
 	import { untrack } from 'svelte';
 	import { catalogue } from '$lib/mock/album';
 	import { lyricsFor } from '$lib/mock/lyrics';
@@ -306,6 +308,8 @@
 						tint="var(--m-muted-foreground)"
 						onplay={() => player.select(track.id)}
 						onpress={() => player.select(track.id)}
+						oncontext={(event: MouseEvent) =>
+							menu.at(event, `track-${track.id}`, () => trackMenu(track))}
 					/>
 				{/each}
 			{/if}
@@ -336,6 +340,8 @@
 						cover={track.cover}
 						onplay={() => player.select(track.id)}
 						onpress={() => player.select(track.id)}
+						oncontext={(event: MouseEvent) =>
+							menu.at(event, `track-${track.id}`, () => trackMenu(track))}
 						action={remove}
 					/>
 				{/each}
@@ -350,6 +356,8 @@
 						cover={track.cover}
 						onplay={() => player.select(track.id)}
 						onpress={() => player.select(track.id)}
+						oncontext={(event: MouseEvent) =>
+							menu.at(event, `track-${track.id}`, () => trackMenu(track))}
 						action={remove}
 					/>
 				{/each}

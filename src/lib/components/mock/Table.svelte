@@ -4,14 +4,19 @@
 	import Cover from './Cover.svelte';
 	import Icon from './Icon.svelte';
 	import Like from './Like.svelte';
+	import Ring from './Ring.svelte';
+	import { downloads } from '$lib/mock/downloads.svelte';
+	import { menu } from '$lib/mock/menu.svelte';
+	import { trackMenu } from '$lib/mock/menus';
 
 	type Column = { key: string; label: string; width: number; align?: string; sortable?: boolean };
 
 	let {
 		columns = [],
 		rows = [],
-		framed = false
-	}: { columns?: Column[]; rows?: Track[]; framed?: boolean } = $props();
+		framed = false,
+		album = ''
+	}: { columns?: Column[]; rows?: Track[]; framed?: boolean; album?: string } = $props();
 
 	const span = $derived(columns.reduce((sum, column) => sum + column.width, 0));
 	const head = $derived(columns.map((column) => `${column.width}px`).join(' '));
@@ -40,7 +45,9 @@
 			style:grid-template-columns={body}
 			role="button"
 			tabindex="0"
+			class:held={menu.owner === `track-${row.id}`}
 			onclick={() => player.select(row.id)}
+			oncontextmenu={(event) => menu.at(event, `track-${row.id}`, () => trackMenu(row, { album }))}
 			onkeydown={(event) => {
 				if (event.key === 'Enter' || event.key === ' ') {
 					event.preventDefault();
@@ -65,9 +72,19 @@
 				{:else if column.key === 'cover'}
 					<span class="cell"><Cover src={row.cover} size={34} /></span>
 				{:else if column.key === 'title'}
+					{@const saving = downloads.of(row.id)}
 					<span class="cell title">
 						<span class="name">{row.title}</span>
 						<span class="like" class:kept={player.likes(row.id)}><Like id={row.id} small /></span>
+						{#if saving !== undefined}
+							<span
+								class="saving"
+								class:landed={saving === 1}
+								title={saving === 1 ? 'Downloaded' : 'Downloading'}
+							>
+								<Ring done={saving} size={14} />
+							</span>
+						{/if}
 					</span>
 				{:else if column.key === 'album'}
 					<span class="cell muted">{shelf.get(row.album)?.title ?? ''}</span>
@@ -124,6 +141,32 @@
 
 	.row.active {
 		background: var(--m-muted);
+	}
+
+	.row.held {
+		background: var(--m-table-hover);
+	}
+
+	.saving {
+		display: flex;
+		flex: none;
+		border-radius: 50%;
+		background: color-mix(in srgb, var(--m-primary) 14%, transparent);
+	}
+
+	.saving.landed {
+		background: var(--m-primary);
+		color: var(--m-primary-foreground);
+	}
+
+	.saving.landed :global(.ring) {
+		color: var(--m-primary-foreground);
+	}
+
+	.saving.landed :global(.track),
+	.saving.landed :global(.fill) {
+		opacity: 0;
+		transition: opacity 600ms ease;
 	}
 
 	.cell {

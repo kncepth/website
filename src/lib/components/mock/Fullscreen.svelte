@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { library } from '$lib/mock/library.svelte';
 	import { clock, shelf } from '$lib/mock/album';
 	import { player } from '$lib/mock/player.svelte';
 	import { settings } from '$lib/mock/settings.svelte';
@@ -201,11 +202,13 @@
 						<span class="title">{player.track.title}</span>
 						<span class="flank end">
 							<Control
-								icon={player.saved ? 'heart-filled' : 'heart'}
-								title={player.saved ? 'Remove from library' : 'Add to library'}
+								icon={library.saved(player.track.album) ? 'heart-filled' : 'heart'}
+								title={library.saved(player.track.album)
+									? 'Remove from Favorites'
+									: 'Add to Favorites'}
 								small
-								tint={player.saved ? 'primary' : 'muted'}
-								onclick={() => player.toggleSaved()}
+								tint={library.saved(player.track.album) ? 'primary' : 'muted'}
+								onclick={() => library.toggle(player.track.album)}
 							/>
 						</span>
 					</div>

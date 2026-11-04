@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { SvelteSet } from 'svelte/reactivity';
-	import { nav, pinned } from '$lib/mock/album';
+	import { nav } from '$lib/mock/album';
+	import { library } from '$lib/mock/library.svelte';
+	import { menu } from '$lib/mock/menu.svelte';
+	import { albumMenu, artistMenu, playlistMenu } from '$lib/mock/menus';
 	import { route } from '$lib/mock/route.svelte';
 	import Card from './Card.svelte';
 	import Icon from './Icon.svelte';
@@ -78,7 +81,7 @@
 	</div>
 
 	{#if !folded}
-		{#each pinned as entry (entry.id)}
+		{#each library.pins as entry (entry.id)}
 			<span class="pin" class:here={here(entry)}>
 				<Card
 					flat
@@ -90,6 +93,14 @@
 					circle={entry.round ?? false}
 					onplay={() => route.go(entry.to)}
 					onpress={() => route.go(entry.to)}
+					oncontext={(event: MouseEvent) =>
+						menu.at(event, `pin-${entry.id}`, () =>
+							entry.kind === 'Album'
+								? albumMenu(entry.id)
+								: entry.kind === 'Artist'
+									? artistMenu(entry.id)
+									: playlistMenu(entry.id)
+						)}
 				/>
 			</span>
 		{/each}

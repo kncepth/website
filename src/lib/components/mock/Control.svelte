@@ -12,6 +12,7 @@
 		disabled = false,
 		size = 0,
 		trailing = '',
+		wide = false,
 		onclick = undefined
 	}: {
 		icon?: string;
@@ -24,6 +25,7 @@
 		disabled?: boolean;
 		size?: number;
 		trailing?: string;
+		wide?: boolean;
 		onclick?: (event: MouseEvent) => void;
 	} = $props();
 </script>
@@ -34,6 +36,7 @@
 	class:small
 	class:selected
 	class:squared={!label}
+	class:wide
 	style:width={size ? `${size}px` : undefined}
 	style:padding={size ? '0' : undefined}
 	aria-label={title}
@@ -72,6 +75,10 @@
 
 	.squared {
 		width: 40px;
+	}
+
+	.wide {
+		min-width: 96px;
 	}
 
 	.small.squared {

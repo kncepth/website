@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { menu } from '$lib/mock/menu.svelte';
+	import { albumMenu, artistMenu, playlistMenu } from '$lib/mock/menus';
 	import { albums, clock, records } from '$lib/mock/album';
 	import {
 		artists,
@@ -75,6 +77,8 @@
 					cover={entry.cover}
 					onplay={() => player.select((records.get(entry.id) ?? [])[0]?.id ?? player.id)}
 					onpress={() => route.go({ screen: 'album', id: entry.id })}
+					oncontext={(event: MouseEvent) =>
+						menu.at(event, `album-${entry.id}`, () => albumMenu(entry.id))}
 				/>
 			{/each}
 		</div>
@@ -91,6 +95,8 @@
 					title={artist.name}
 					meta="Artist"
 					onpress={() => route.go({ screen: 'artist', id: artist.id })}
+					oncontext={(event: MouseEvent) =>
+						menu.at(event, `artist-${artist.id}`, () => artistMenu(artist.id))}
 				/>
 			{/each}
 		</div>
@@ -109,6 +115,8 @@
 					title={list.name}
 					meta={list.owner}
 					onpress={() => route.go({ screen: 'playlist', id: list.id })}
+					oncontext={(event: MouseEvent) =>
+						menu.at(event, `playlist-${list.id}`, () => playlistMenu(list.id))}
 				/>
 			{/each}
 		</div>

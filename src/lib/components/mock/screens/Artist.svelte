@@ -1,10 +1,13 @@
 <script lang="ts">
+	import { menu } from '$lib/mock/menu.svelte';
+	import { albumMenu, artistMenu } from '$lib/mock/menus';
 	import { ABOUT_FALLBACK, albumsOf, artistColumns, artists, popularOf } from '$lib/mock/screens';
 	import { albums } from '$lib/mock/album';
 	import { player } from '$lib/mock/player.svelte';
 	import { route } from '$lib/mock/route.svelte';
 	import About from '../About.svelte';
 	import Card from '../Card.svelte';
+	import { library } from '$lib/mock/library.svelte';
 	import Control from '../Control.svelte';
 	import Modal from '../Modal.svelte';
 	import PageHero from '../PageHero.svelte';
@@ -92,7 +95,8 @@
 				<Control
 					variant="filled"
 					icon={holding ? 'pause' : 'play'}
-					label={holding ? 'Pause' : mine ? 'Resume' : 'Play now'}
+					label={holding ? 'Pause' : 'Play'}
+					wide
 					onclick={() => {
 						if (holding) player.pause();
 						else if (mine) player.resume();
@@ -100,8 +104,22 @@
 					}}
 				/>
 				<Control variant="outline" icon="shuffle" title="Shuffle" />
-				<Control variant="outline" icon="heart" title="Add to library" />
-				<Control icon="ellipsis" title="More" />
+				<Control
+					variant="outline"
+					icon={library.saved(artist.id) ? 'heart-filled' : 'heart'}
+					title={library.saved(artist.id) ? 'Remove from Favorites' : 'Add to Favorites'}
+					tint={library.saved(artist.id) ? 'primary' : ''}
+					onclick={() => library.toggle(artist.id)}
+				/>
+				<Control
+					icon="ellipsis"
+					title="More"
+					selected={menu.owner === `hero-${artist.id}`}
+					onclick={(event: MouseEvent) =>
+						menu.from(event.currentTarget as Element, `hero-${artist.id}`, () =>
+							artistMenu(artist.id, { here: true })
+						)}
+				/>
 			{/snippet}
 		</PageHero>
 
@@ -146,6 +164,8 @@
 							meta="{entry.released} · {entry.artist}"
 							cover={entry.cover}
 							onpress={() => route.go({ screen: 'album', id: entry.id })}
+							oncontext={(event: MouseEvent) =>
+								menu.at(event, `album-${entry.id}`, () => albumMenu(entry.id))}
 						/>
 					{/each}
 				</div>
@@ -198,6 +218,8 @@
 								meta="{entry.released} · {entry.artist}"
 								cover={entry.cover}
 								onpress={() => route.go({ screen: 'album', id: entry.id })}
+								oncontext={(event: MouseEvent) =>
+									menu.at(event, `album-${entry.id}`, () => albumMenu(entry.id))}
 							/>
 						{/each}
 					</div>
