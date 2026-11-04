@@ -1,0 +1,21 @@
+{
+	"name": "Aurora",
+	"author": "ADI",
+	"version": 1,
+	"theme": {
+		"background": "#20212b",
+		"foreground": "#f3f0ff",
+		"sidebar": "#252735",
+		"popover": "#34364a",
+		"secondary": "#383a50",
+		"muted": "#45485f",
+		"muted_foreground": "#b9b8cc",
+		"border": "#66677c80",
+		"primary": "#ff7eb6",
+		"primary_foreground": "#20212b",
+		"progress_bar": "#7de2d1",
+		"selection": "#a78bfa",
+		"table_active": "#a78bfa33",
+		"table_active_border": "#ffd166"
+	}
+}
