@@ -1,0 +1,21 @@
+{
+	"name": "Silver Grove",
+	"author": "ADI",
+	"version": 1,
+	"theme": {
+		"background": "#f1f4f1",
+		"foreground": "#26342b",
+		"sidebar": "#e5ebe6",
+		"popover": "#ffffff",
+		"secondary": "#e2e9e3",
+		"muted": "#d5ded7",
+		"muted_foreground": "#64736a",
+		"border": "#78877d66",
+		"primary": "#416b4a",
+		"primary_foreground": "#ffffff",
+		"progress_bar": "#78a77a",
+		"selection": "#c4ddc4",
+		"table_active": "#a8d5a233",
+		"table_active_border": "#6b9a70"
+	}
+}

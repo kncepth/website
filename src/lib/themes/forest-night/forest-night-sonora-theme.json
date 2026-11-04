@@ -1,0 +1,21 @@
+{
+	"name": "Forest Night",
+	"author": "ADI",
+	"version": 1,
+	"theme": {
+		"background": "#18221d",
+		"foreground": "#e6eee8",
+		"sidebar": "#202c25",
+		"popover": "#2b3930",
+		"secondary": "#304036",
+		"muted": "#3b4a40",
+		"muted_foreground": "#b6c2b9",
+		"border": "#87958b66",
+		"primary": "#6fa879",
+		"primary_foreground": "#142019",
+		"progress_bar": "#a8d5a2",
+		"selection": "#547a5c",
+		"table_active": "#a8d5a233",
+		"table_active_border": "#a8d5a2"
+	}
+}
