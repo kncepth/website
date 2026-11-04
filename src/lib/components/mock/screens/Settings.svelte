@@ -22,6 +22,7 @@
 	import { reach } from '$lib/mock/packs.svelte';
 	import { settings } from '$lib/mock/settings.svelte';
 	import { colorsOf, families } from '$lib/mock/theme';
+	import Logo from '../../Logo.svelte';
 	import ThemeMiniature from '../../ThemeMiniature.svelte';
 	import Control from '../Control.svelte';
 	import Icon from '../Icon.svelte';
@@ -33,8 +34,26 @@
 
 	let {
 		tab = $bindable('General'),
+		room = 640,
 		onequalizer = undefined
-	}: { tab?: string; onequalizer?: () => void } = $props();
+	}: { tab?: string; room?: number; onequalizer?: () => void } = $props();
+
+	/** The desktop's column: the content less its margins, up to 640px. Tabs keep their
+	 *  names only while it is at least as wide as ROOMY, and show icons with tooltips below. */
+	const COLUMN = 640;
+	const ROOMY = 620;
+	const MARGIN = 24;
+	const named = $derived(Math.min(room - MARGIN * 2, COLUMN) >= ROOMY);
+
+	let using = $state('spotify');
+	const account = $derived(providers.find((one) => one.glyph === using)?.name ?? 'Spotify');
+	const initials = (name: string) =>
+		name
+			.split(/\s+/)
+			.map((part) => part[0])
+			.join('')
+			.slice(0, 2)
+			.toUpperCase();
 
 	let query = $state('');
 	let top = $state(125);
@@ -334,19 +353,33 @@
 			{/snippet}
 		</OptionCards>
 	{:else if kind === 'accounts'}
-		<div class="accounts">
+		<div class="services" role="radiogroup" aria-label="Streaming services">
 			{#each providers as account (account.glyph)}
-				<div class="account" class:pressable={!account.active}>
-					<span class="radio" class:on={account.active}><span class="hole"></span></span>
-					<span class="logo"><Icon name={account.glyph} size={26} /></span>
-					<div class="text">
+				{@const active = account.glyph === using}
+				<!-- the role is a radio for a stored account and a button for one to sign in to -->
+				<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+				<div
+					class="service"
+					class:active
+					class:pressable={!active}
+					style:--brand={account.brand || 'var(--m-foreground)'}
+					role={account.stored ? 'radio' : 'button'}
+					aria-checked={account.stored ? active : undefined}
+					tabindex="0"
+					onclick={() => account.stored && (using = account.glyph)}
+					onkeydown={(event) => event.key === 'Enter' && account.stored && (using = account.glyph)}
+				>
+					<span class="mark"><Icon name={account.glyph} size={22} /></span>
+					<span class="text">
 						<span class="name">{account.name}</span>
-						<span class="detail">{account.status}</span>
-					</div>
+						{#if active}<span class="detail">In use</span>{/if}
+					</span>
 					{#if account.stored}
-						<Control icon="log-out" title="Sign out" size={32} />
+						<span class="leave"><Control icon="log-out" title="Sign out" small tint="muted" /></span
+						>
+						<span class="radio" class:on={active}><span class="hole"></span></span>
 					{:else}
-						<span class="arrow"><Icon name="chevron-right" size={14} /></span>
+						<span class="sign">Sign in</span>
 					{/if}
 				</div>
 			{/each}
@@ -419,21 +452,25 @@
 							{drills[drill].tab}
 						</button>
 					{/if}
-					{#if !drill && tab === 'General'}
-						<div class="profile">
-							<span class="face">{listener.name.slice(0, 1)}</span>
-							<div class="who">
-								<span class="display">{listener.name}</span>
-								<span class="handle">{listener.id}</span>
-							</div>
-						</div>
-						<hr class="split" />
-					{/if}
 
 					{#each pages as section, at (section.id)}
-						<h2 class="headline" class:later={at > 0 || (!drill && tab === 'General')}>
+						<h2 class="headline" class:later={at > 0}>
 							{section.title}
 						</h2>
+						{#if section.id === 'providers'}
+							<div class="profile">
+								<span class="face">{initials(listener.name)}</span>
+								<div class="who">
+									<span class="display">{listener.name}</span>
+									<span class="handle">{account} · {listener.id}</span>
+								</div>
+							</div>
+						{:else if section.id === 'about'}
+							<div class="mark-row">
+								<span class="app"><Logo size={56} /></span>
+								<span class="display">Sonora</span>
+							</div>
+						{/if}
 						{#if section.preview}
 							<SettingsPreview kind={section.preview} />
 						{/if}
@@ -497,6 +534,7 @@
 			<label class="field">
 				<Icon name="search" />
 				<input placeholder="Search settings" bind:value={query} />
+				<span class="keys" aria-hidden="true"><kbd>Ctrl</kbd><kbd>F</kbd></span>
 			</label>
 			<div class="categories">
 				{#each tabs as entry (entry.id)}
@@ -504,10 +542,13 @@
 						type="button"
 						class="chip"
 						class:on={!searching && tab === entry.id}
+						class:bare={!named}
+						title={named ? undefined : entry.id}
+						aria-label={entry.id}
 						onclick={() => pick(entry.id)}
 					>
 						<Icon name={entry.icon} />
-						{entry.id}
+						{#if named}{entry.id}{/if}
 					</button>
 				{/each}
 			</div>
@@ -626,6 +667,113 @@
 		color: var(--m-foreground);
 		font: inherit;
 		outline: none;
+	}
+
+	.keys {
+		display: flex;
+		gap: 3px;
+		flex: none;
+	}
+
+	kbd {
+		display: inline-flex;
+		align-items: center;
+		height: 20px;
+		padding: 0 5px;
+		border: 1px solid var(--m-border);
+		border-radius: 4px;
+		background: var(--m-secondary);
+		color: var(--m-muted-foreground);
+		font: inherit;
+		font-size: 11px;
+	}
+
+	.chip.bare {
+		width: 32px;
+		justify-content: center;
+		padding: 0;
+	}
+
+	.profile {
+		margin: 7px 0 3.5px;
+	}
+
+	.mark-row {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		margin: 7px 0 3.5px;
+	}
+
+	.app {
+		display: flex;
+		overflow: hidden;
+		border-radius: 14px;
+	}
+
+	.services {
+		display: flex;
+		flex-direction: column;
+		padding-bottom: 7px;
+	}
+
+	.service {
+		display: flex;
+		height: 52px;
+		align-items: center;
+		gap: 10.5px;
+		margin: 0 -10.5px;
+		padding: 0 10.5px;
+		border-radius: var(--m-radius);
+		transition: background-color 160ms ease;
+	}
+
+	.service.pressable {
+		cursor: pointer;
+	}
+
+	.service.pressable:hover {
+		background: var(--m-secondary-hover);
+	}
+
+	.service.active {
+		background: var(--m-secondary-active);
+	}
+
+	.service .mark {
+		display: flex;
+		flex: none;
+		color: var(--m-muted-foreground);
+		transition: color 160ms ease;
+	}
+
+	.service.active .mark,
+	.service:hover .mark {
+		color: var(--brand);
+	}
+
+	.service .name {
+		font-weight: 500;
+	}
+
+	.leave {
+		display: flex;
+		opacity: 0;
+		transition: opacity 160ms ease;
+	}
+
+	.service.active .leave,
+	.service:hover .leave {
+		opacity: 1;
+	}
+
+	.sign {
+		font-size: 13px;
+		color: var(--m-muted-foreground);
+	}
+
+	.service:hover .sign {
+		color: var(--m-foreground);
 	}
 
 	.categories {

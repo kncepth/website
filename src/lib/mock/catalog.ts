@@ -47,6 +47,7 @@ export const bands = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
 export const providers = [
 	{
 		glyph: 'spotify',
+		brand: '#1ed760',
 		name: 'Spotify',
 		status: 'Playing from this service',
 		stored: true,
@@ -54,6 +55,7 @@ export const providers = [
 	},
 	{
 		glyph: 'applemusic',
+		brand: '#fa2d48',
 		name: 'Apple Music',
 		status: 'Not connected',
 		stored: false,
@@ -61,14 +63,36 @@ export const providers = [
 	},
 	{
 		glyph: 'youtubemusic',
+		brand: '#ff0033',
 		name: 'YouTube Music',
 		status: 'Connected',
 		stored: true,
 		active: false
 	},
-	{ glyph: 'subsonic', name: 'Subsonic', status: 'Not connected', stored: false, active: false },
-	{ glyph: 'deezer', name: 'Deezer', status: 'Not connected', stored: false, active: false },
-	{ glyph: 'tidal', name: 'Tidal', status: 'Not connected', stored: false, active: false }
+	{
+		glyph: 'subsonic',
+		brand: '#ffa31a',
+		name: 'Subsonic',
+		status: 'Not connected',
+		stored: false,
+		active: false
+	},
+	{
+		glyph: 'deezer',
+		brand: '#a238ff',
+		name: 'Deezer',
+		status: 'Not connected',
+		stored: false,
+		active: false
+	},
+	{
+		glyph: 'tidal',
+		brand: '',
+		name: 'Tidal',
+		status: 'Not connected',
+		stored: false,
+		active: false
+	}
 ];
 
 export const scrobblers = [

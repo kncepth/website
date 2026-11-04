@@ -173,6 +173,7 @@
 					{:else if at.screen === 'settings'}
 						<Settings
 							tab={at.tab ?? 'General'}
+							room={content}
 							onequalizer={() => route.go({ screen: 'equalizer' })}
 						/>
 					{:else if at.screen === 'equalizer'}
