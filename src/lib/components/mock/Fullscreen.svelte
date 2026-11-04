@@ -9,6 +9,7 @@
 	import Control from './Control.svelte';
 	import Scrubber from './Scrubber.svelte';
 	import Visualizer from './Visualizer.svelte';
+	import VolumeRise from './VolumeRise.svelte';
 
 	let { panel = $bindable('lyrics'), onleave }: { panel?: string | null; onleave?: () => void } =
 		$props();
@@ -85,9 +86,6 @@
 	}
 
 	const accent = $derived(legible(tokens['--m-primary']));
-	const level = $derived(
-		player.volume === 0 ? 'volume-x' : player.volume < 0.5 ? 'volume-1' : 'volume-2'
-	);
 </script>
 
 {#snippet pill()}
@@ -159,7 +157,7 @@
 					onclick={() => player.cycleRepeat()}
 				/>
 			</div>
-			<span class="volume"><Control icon={level} title="Volume" small tint="muted" /></span>
+			<span class="volume"><VolumeRise frosted={ambient} /></span>
 		</div>
 	</div>
 {/snippet}
@@ -222,7 +220,11 @@
 
 			{#if split}
 				<div class="panel">
-					<Aside tab={panel ?? 'lyrics'} stripped />
+					{#key panel}
+						<div class="entering">
+							<Aside tab={panel ?? 'lyrics'} stripped />
+						</div>
+					{/key}
 					<div class="floating">{@render pill()}</div>
 				</div>
 			{/if}
@@ -358,6 +360,35 @@
 		font-weight: 600;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+
+	.entering {
+		display: flex;
+		flex: 1;
+		min-height: 0;
+		animation: enter 320ms cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	@keyframes enter {
+		from {
+			opacity: 0;
+			transform: translateY(6px);
+			filter: blur(2px);
+		}
+	}
+
+	/* over the ambient field, what is still to come takes the colour behind it rather than grey */
+	.dark .panel {
+		--m-muted-foreground: rgb(255 255 255 / 0.58);
+	}
+
+	.dark .artist {
+		color: rgb(255 255 255 / 0.62);
+	}
+
+	.dark .title,
+	.dark .artist {
+		text-shadow: 0 1px 6px rgb(0 0 0 / 0.18);
 	}
 
 	.artist {
