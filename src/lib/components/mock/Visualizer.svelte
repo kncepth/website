@@ -6,8 +6,18 @@
 		style = 'Bars and wave',
 		playing = false,
 		gain = 1,
-		max = 160
-	}: { color: string; style?: string; playing?: boolean; gain?: number; max?: number } = $props();
+		max = 160,
+		wander = false
+	}: {
+		color: string;
+		style?: string;
+		playing?: boolean;
+		gain?: number;
+		max?: number;
+		/** Draws random levels instead of the spectrum, so it moves whether or not anything
+		 *  plays, as the desktop's Now playing preview does. */
+		wander?: boolean;
+	} = $props();
 
 	const BANDS = 32;
 	const GAP = 3;
@@ -27,6 +37,35 @@
 	const DECAY = 0.12;
 	const SETTLE = 0.04;
 	const SOURCE = '/spectrum.bin';
+	/** The desktop preview's `Wander`: how often it picks new heights, how fast it eases to
+	 *  them, the lean from the lowest band to the highest, and how alike the channels move. */
+	const PICK = 0.14;
+	const WANDER_SETTLE = 0.09;
+	const TILT = [1, 0.6];
+	const LOW = 0.08;
+	const SWELL = 0.8;
+	const SHARED = 0.75;
+
+	/** Random heights under each band's lean, the channels sharing most of their randomness,
+	 *  each smoothed across its neighbours so the wave rolls rather than spikes. */
+	function pick(): number[][] {
+		const swell = SWELL + (1 - SWELL) * Math.random();
+		const channels: number[][] = [[], []];
+		for (let band = 0; band < BANDS; band += 1) {
+			const lean = TILT[0] + ((TILT[1] - TILT[0]) * band) / (BANDS - 1);
+			const shared = Math.random();
+			for (const channel of channels) {
+				const own = Math.random();
+				channel.push(lean * swell * (LOW + (1 - LOW) * (shared * SHARED + own * (1 - SHARED))));
+			}
+		}
+		return channels.map((bands) =>
+			bands.map(
+				(level, at) =>
+					(bands[Math.max(at - 1, 0)] + level * 4 + bands[Math.min(at + 1, BANDS - 1)]) / 6
+			)
+		);
+	}
 
 	let canvas = $state<HTMLCanvasElement | null>(null);
 
@@ -163,6 +202,7 @@
 		let last = 0;
 		let clock = 0;
 		let beat = 0;
+		let picked = 0;
 		let frames: Uint8Array[] = [];
 		load().then((loaded) => (frames = loaded));
 
@@ -171,7 +211,13 @@
 			last = now;
 			const live = playing && !still && frames.length > 0;
 
-			if (live) {
+			if (wander) {
+				picked -= step;
+				if (picked <= 0 || still) {
+					heard = pick();
+					picked = PICK;
+				}
+			} else if (live) {
 				clock += step;
 				const index = Math.floor(clock * RATE) % frames.length;
 				const loud = Math.sqrt(gain);
@@ -188,7 +234,7 @@
 				}
 			}
 
-			const ease = 1 - Math.exp(-step / SETTLE);
+			const ease = still && wander ? 1 : 1 - Math.exp(-step / (wander ? WANDER_SETTLE : SETTLE));
 			levels = levels.map((bands, channel) =>
 				bands.map((level, band) => level + (heard[channel][band] - level) * ease)
 			);

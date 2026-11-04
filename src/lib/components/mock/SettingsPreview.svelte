@@ -24,6 +24,27 @@
 	const tint = $derived(shelf.get(player.track.album)?.tint);
 	/** The visualizer's colour, the accent Now playing takes from the cover. */
 	const accent = $derived(palette(tint, true, 'Dark')['--m-primary']);
+
+	/** The peaks stop short of the artist line, as in fullscreen, by a pad. */
+	const PAD = 8;
+	let stage = $state<HTMLElement | null>(null);
+	let meta = $state<HTMLElement | null>(null);
+	let reach = $state(60);
+
+	$effect(() => {
+		if (!stage || !meta) return;
+		const measure = () => {
+			if (!stage || !meta) return;
+			const frame = stage.getBoundingClientRect();
+			const words = meta.getBoundingClientRect();
+			const scale = frame.height / stage.offsetHeight || 1;
+			reach = Math.max((frame.bottom - words.bottom) / scale - PAD, 0);
+		};
+		const watch = new ResizeObserver(measure);
+		watch.observe(stage);
+		measure();
+		return () => watch.disconnect();
+	});
 	const wash = $derived(
 		tint
 			? `radial-gradient(120% 140% at 20% 20%, hsl(${tint.hue} 45% 32%), transparent 60%), radial-gradient(120% 140% at 90% 90%, hsl(${tint.second?.hue ?? tint.hue} 40% 26%), transparent 60%), #0b0b0b`
@@ -75,24 +96,20 @@
 
 <div class="preview" aria-hidden="true">
 	{#if kind === 'now-playing'}
-		<!-- a frame of Now playing: the cover over its ambient field, with the visualizer the
-		     page's style picks drawn from the same spectrum as the real one -->
-		<div class="stage" class:plain={!settings.ambient}>
+		<!-- a miniature of Now playing: the ambient field, random levels standing in for the
+		     spectrum so it moves whether or not anything plays, and the cover over its name -->
+		<div class="stage" class:plain={!settings.ambient} bind:this={stage}>
 			{#if settings.ambient}<Ambient {tint} moving={settings.ambientMotion} />{/if}
-			<img class="cover" src={player.track.cover} alt="" />
-			<div class="words">
-				<span class="title">{player.track.title}</span>
-				<span class="artist">{player.track.artist}</span>
-			</div>
 			{#if settings.visualizer !== 'Off'}
-				<Visualizer
-					color={accent}
-					style={String(settings.visualizer)}
-					playing={player.playing}
-					gain={settings.visualizerAbsolute ? 1 : player.volume}
-					max={70}
-				/>
+				<Visualizer color={accent} style={String(settings.visualizer)} wander max={reach} />
 			{/if}
+			<div class="center">
+				<img class="cover" src={player.track.cover} alt="" />
+				<div class="words" bind:this={meta}>
+					<span class="title">{player.track.title}</span>
+					<span class="artist">{player.track.artist}</span>
+				</div>
+			</div>
 		</div>
 	{:else if kind === 'lyrics'}
 		<div
@@ -198,11 +215,7 @@
 
 	.stage {
 		position: relative;
-		display: flex;
-		height: 150px;
-		align-items: center;
-		gap: 14px;
-		padding: 0 21px;
+		aspect-ratio: 1 / 0.5;
 		overflow: hidden;
 		background: #0b0b0b;
 		color: #fafafa;
@@ -217,29 +230,49 @@
 		color: var(--m-muted-foreground);
 	}
 
+	.center {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 3.5px;
+	}
+
 	.cover {
 		position: relative;
-		z-index: 1;
-		width: 84px;
-		height: 84px;
-		border-radius: 8px;
+		height: 46%;
+		aspect-ratio: 1;
+		border-radius: var(--m-radius);
 		object-fit: cover;
 	}
 
 	.words {
 		position: relative;
-		z-index: 1;
 		display: flex;
+		max-width: 60%;
 		flex-direction: column;
+		align-items: center;
+		gap: 3.5px;
+		margin-top: 7px;
+		line-height: 1.2;
+	}
+
+	.words span {
+		max-width: 100%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.title {
-		font-size: 17px;
+		font-size: 14px;
 		font-weight: 600;
 	}
 
 	.artist {
-		font-size: 13px;
+		font-size: 12px;
 		color: rgb(255 255 255 / 0.62);
 	}
 
