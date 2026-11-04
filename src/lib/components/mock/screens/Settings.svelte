@@ -387,7 +387,7 @@
 					/>
 				{:else if entry.control === 'picker'}
 					<Picker
-						value={String(store[entry.key] ?? options(entry)[0] ?? '')}
+						value={entry.label ?? String(store[entry.key] ?? options(entry)[0] ?? '')}
 						options={options(entry)}
 						onpick={(value) => (store[entry.key] = value)}
 					/>
@@ -1102,7 +1102,8 @@
 		height: 26px;
 		padding: 0 8px;
 		border: 0;
-		border-radius: var(--m-radius);
+		/* tucked inside the bar: its radius less the bar's padding and border */
+		border-radius: max(calc(var(--m-radius) - 4.5px), 0px);
 		background: none;
 		color: var(--m-foreground);
 		font: inherit;
@@ -1135,13 +1136,13 @@
 		color: var(--m-muted-foreground);
 	}
 
+	/* a settings row stands at least one list row tall with no rule under it, as the desktop's */
 	.row {
 		display: flex;
+		min-height: 52px;
 		align-items: center;
 		justify-content: space-between;
 		gap: 14px;
-		padding: 10.5px 0;
-		border-bottom: 1px solid var(--m-table-row-border);
 	}
 
 	.text {
@@ -1515,7 +1516,7 @@
 		height: 24px;
 		padding: 0 9px;
 		border: 0;
-		border-radius: max(calc(var(--m-radius) - 2px), 0px);
+		border-radius: max(calc(var(--m-radius) - 3px), 0px);
 		background: none;
 		color: var(--m-muted-foreground);
 		font: inherit;
