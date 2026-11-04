@@ -18,6 +18,7 @@
 		type Row,
 		type Section
 	} from '$lib/mock/catalog';
+	import { accounts } from '$lib/mock/accounts.svelte';
 	import { menu } from '$lib/mock/menu.svelte';
 	import { reach } from '$lib/mock/packs.svelte';
 	import { settings } from '$lib/mock/settings.svelte';
@@ -45,8 +46,11 @@
 	const MARGIN = 24;
 	const named = $derived(Math.min(room - MARGIN * 2, COLUMN) >= ROOMY);
 
-	let using = $state('spotify');
-	const account = $derived(providers.find((one) => one.glyph === using)?.name ?? 'Spotify');
+	function press(glyph: string) {
+		if (accounts.waiting) return;
+		if (accounts.stored(glyph)) accounts.use(glyph);
+		else accounts.signIn(glyph);
+	}
 	const initials = (name: string) =>
 		name
 			.split(/\s+/)
@@ -355,28 +359,50 @@
 	{:else if kind === 'accounts'}
 		<div class="services" role="radiogroup" aria-label="Streaming services">
 			{#each providers as account (account.glyph)}
-				{@const active = account.glyph === using}
-				<!-- the role is a radio for a stored account and a button for one to sign in to -->
+				{@const active = account.glyph === accounts.active}
+				{@const kept = accounts.stored(account.glyph)}
+				{@const waiting = accounts.waiting === account.glyph}
+				<!-- the role is a radio for a kept account and a button for one to sign in to -->
 				<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 				<div
 					class="service"
 					class:active
-					class:pressable={!active}
+					class:pressable={!active && !waiting}
 					style:--brand={account.brand || 'var(--m-foreground)'}
-					role={account.stored ? 'radio' : 'button'}
-					aria-checked={account.stored ? active : undefined}
+					role={kept ? 'radio' : 'button'}
+					aria-checked={kept ? active : undefined}
+					aria-label={account.name}
 					tabindex="0"
-					onclick={() => account.stored && (using = account.glyph)}
-					onkeydown={(event) => event.key === 'Enter' && account.stored && (using = account.glyph)}
+					onclick={() => press(account.glyph)}
+					onkeydown={(event) => event.key === 'Enter' && press(account.glyph)}
 				>
 					<span class="mark"><Icon name={account.glyph} size={22} /></span>
 					<span class="text">
 						<span class="name">{account.name}</span>
 						{#if active}<span class="detail">In use</span>{/if}
 					</span>
-					{#if account.stored}
-						<span class="leave"><Control icon="log-out" title="Sign out" small tint="muted" /></span
+					{#if waiting}
+						<button
+							type="button"
+							class="action"
+							onclick={(event) => {
+								event.stopPropagation();
+								accounts.cancel();
+							}}>Cancel</button
 						>
+					{:else if kept}
+						<span class="leave">
+							<Control
+								icon="log-out"
+								title="Sign out"
+								small
+								tint="muted"
+								onclick={(event: MouseEvent) => {
+									event.stopPropagation();
+									accounts.signOut(account.glyph);
+								}}
+							/>
+						</span>
 						<span class="radio" class:on={active}><span class="hole"></span></span>
 					{:else}
 						<span class="sign">Sign in</span>
@@ -459,11 +485,19 @@
 						</h2>
 						{#if section.id === 'providers'}
 							<div class="profile">
-								<span class="face">{initials(listener.name)}</span>
-								<div class="who">
-									<span class="display">{listener.name}</span>
-									<span class="handle">{account} · {listener.id}</span>
-								</div>
+								{#if accounts.current}
+									<span class="face">{initials(listener.name)}</span>
+									<div class="who">
+										<span class="display">{listener.name}</span>
+										<span class="handle">{accounts.current.name} · {listener.id}</span>
+									</div>
+								{:else}
+									<span class="face blank"></span>
+									<div class="who">
+										<span class="display">Not signed in</span>
+										<span class="handle">Sign in to a streaming service below</span>
+									</div>
+								{/if}
 							</div>
 						{:else if section.id === 'about'}
 							<div class="mark-row">
@@ -696,6 +730,17 @@
 
 	.profile {
 		margin: 7px 0 3.5px;
+	}
+
+	.face.blank {
+		background: var(--m-secondary);
+		animation: pulse 1.4s ease-in-out infinite;
+	}
+
+	@keyframes pulse {
+		50% {
+			opacity: 0.55;
+		}
 	}
 
 	.mark-row {

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { accounts } from '$lib/mock/accounts.svelte';
 	import { together } from '$lib/mock/together.svelte';
 	import Control from './Control.svelte';
 	import Modal from './Modal.svelte';
@@ -29,7 +30,7 @@
 {#if together.showing && together.kind === 'session'}
 	<Modal
 		title="Your Session code"
-		detail="Anyone signed in to Spotify can join with this code"
+		detail="Anyone signed in to {accounts.current?.name ?? 'Spotify'} can join with this code"
 		width={420}
 		ondismiss={() => together.show(false)}
 	>

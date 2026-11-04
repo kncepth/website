@@ -8,6 +8,7 @@
 	import { radius, settings } from '$lib/mock/settings.svelte';
 	import { theme } from '$lib/theme.svelte';
 	import { downloads } from '$lib/mock/downloads.svelte';
+	import { accounts } from '$lib/mock/accounts.svelte';
 	import { menu } from '$lib/mock/menu.svelte';
 	import { together } from '$lib/mock/together.svelte';
 	import Aside from './Aside.svelte';
@@ -122,6 +123,17 @@
 
 	$effect(() => {
 		if (tab === 'members') right = true;
+	});
+
+	// leaving Spotify ends what Spotify Connect was doing, and signing out of every service
+	// ends a Sonora Session too, as the desktop's Sessions button stops offering either
+	$effect(() => {
+		const service = accounts.active;
+		if (service !== 'spotify') {
+			together.transfer(null);
+			if (together.kind === 'jam') together.leave();
+		}
+		if (!service && together.kind) together.leave();
 	});
 
 	$effect(() => {

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { menu, type Item } from '$lib/mock/menu.svelte';
+	import { accounts } from '$lib/mock/accounts.svelte';
 	import { devices, together } from '$lib/mock/together.svelte';
 	import Icon from './Icon.svelte';
 
@@ -9,7 +10,8 @@
 
 	function sheet() {
 		const here = together.device;
-		const items: Item[] = [
+		// devices and Jams belong to Spotify Connect, so only a Spotify session lists them
+		const connect: Item[] = [
 			{
 				id: 'device-here',
 				label: 'This computer',
@@ -59,6 +61,7 @@
 							]
 			}
 		];
+		const items: Item[] = accounts.active === 'spotify' ? connect : [];
 		if (together.kind) {
 			items.push({
 				id: 'members',

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { clock } from '$lib/mock/album';
+	import { accounts } from '$lib/mock/accounts.svelte';
 	import { player } from '$lib/mock/player.svelte';
 	import { settings } from '$lib/mock/settings.svelte';
 	import Control from './Control.svelte';
@@ -70,7 +71,7 @@
 
 {#snippet side()}
 	<div class="tabs">
-		{#if settings.sessionsButton}
+		{#if settings.sessionsButton && accounts.active}
 			<Sessions onmembers={() => (tab = 'members')} />
 		{/if}
 		<Control

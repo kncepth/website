@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { shelf } from '$lib/mock/album';
+	import { accounts } from '$lib/mock/accounts.svelte';
 	import { player } from '$lib/mock/player.svelte';
 	import { settings } from '$lib/mock/settings.svelte';
 	import Icon from './Icon.svelte';
@@ -44,7 +45,7 @@
 		if (name === 'Title') return player.track.title;
 		if (name === 'Artist') return player.track.artist;
 		if (name === 'Artist - Title') return `${player.track.artist} - ${player.track.title}`;
-		if (name === 'Provider') return 'Spotify';
+		if (name === 'Provider') return accounts.current?.name ?? 'Sonora';
 		if (name === 'Music') return 'music';
 		return 'Sonora';
 	});
@@ -130,7 +131,10 @@
 					{:else}
 						<img src={player.track.cover} alt="" />
 					{/if}
-					{#if settings.discordBadge}<span class="badge"><Icon name="spotify" size={12} /></span
+					{#if settings.discordBadge}<span
+							class="badge"
+							style:background={accounts.current?.brand || '#fff'}
+							><Icon name={accounts.current?.glyph ?? 'music'} size={12} /></span
 						>{/if}
 				</span>
 				<span class="lines">
@@ -143,7 +147,7 @@
 			</div>
 			{#if settings.discordButtons && !settings.discordAnonymous}
 				<div class="buttons">
-					<span>Play on Spotify</span>
+					<span>Play on {accounts.current?.name ?? 'Sonora'}</span>
 					<span>Get Sonora</span>
 				</div>
 			{/if}
