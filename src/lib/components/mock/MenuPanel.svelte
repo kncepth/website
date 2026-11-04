@@ -20,6 +20,19 @@
 	} = $props();
 
 	let hovered = $state('');
+	let query = $state('');
+
+	/** The rows on show: a search hides the lead rows and narrows the filtered ones. */
+	const shown = $derived.by(() => {
+		const needle = query.trim().toLowerCase();
+		if (!needle) return items;
+		return items.filter(
+			(item) => !item.lead && (!item.filtered || (item.label ?? '').toLowerCase().includes(needle))
+		);
+	});
+	const unmatched = $derived(
+		!!query.trim() && items.some((item) => item.filtered) && !shown.some((item) => item.filtered)
+	);
 	let leave = 0;
 
 	function enter(item: Item) {
@@ -63,8 +76,17 @@
 		</div>
 	{/if}
 
-	{#each items as item (item.id)}
-		{#if item.separator}
+	{#each shown as item (item.id)}
+		{#if item.search}
+			<input
+				class="search"
+				placeholder={item.label}
+				aria-label={item.label}
+				bind:value={query}
+				onclick={(event) => event.stopPropagation()}
+			/>
+			{#if unmatched}<div class="row disabled">No matches</div>{/if}
+		{:else if item.separator}
 			<span class="separator"></span>
 		{:else}
 			<div
@@ -187,6 +209,19 @@
 	.tile:disabled {
 		color: var(--m-muted-foreground);
 		cursor: default;
+	}
+
+	.search {
+		height: 30px;
+		margin-bottom: 2px;
+		padding: 0 9px;
+		border: 1px solid var(--m-border);
+		border-radius: max(calc(var(--m-radius) - 3.5px), 0px);
+		background: var(--m-secondary);
+		color: var(--m-foreground);
+		font: inherit;
+		font-size: 13px;
+		outline: none;
 	}
 
 	.separator {

@@ -15,8 +15,18 @@
 		columns = [],
 		rows = [],
 		framed = false,
-		album = ''
-	}: { columns?: Column[]; rows?: Track[]; framed?: boolean; album?: string } = $props();
+		album = '',
+		playlist = '',
+		history = false
+	}: {
+		columns?: Column[];
+		rows?: Track[];
+		framed?: boolean;
+		/** The album, playlist or history page the rows belong to, which the menu adapts to. */
+		album?: string;
+		playlist?: string;
+		history?: boolean;
+	} = $props();
 
 	const span = $derived(columns.reduce((sum, column) => sum + column.width, 0));
 	/** Text columns share what the page has and give way down to a floor, as the desktop's do. */
@@ -50,7 +60,8 @@
 			tabindex="0"
 			class:held={menu.owner === `track-${row.id}`}
 			onclick={() => player.select(row.id)}
-			oncontextmenu={(event) => menu.at(event, `track-${row.id}`, () => trackMenu(row, { album }))}
+			oncontextmenu={(event) =>
+				menu.at(event, `track-${row.id}`, () => trackMenu(row, { album, playlist, history }))}
 			onkeydown={(event) => {
 				if (event.key === 'Enter' || event.key === ' ') {
 					event.preventDefault();
@@ -75,19 +86,17 @@
 				{:else if column.key === 'cover'}
 					<span class="cell"><Cover src={row.cover} size={34} /></span>
 				{:else if column.key === 'title'}
-					{@const saving = downloads.of(row.id)}
+					{@const saving = downloads.state(row.id)}
 					<span class="cell title">
 						<span class="name">{row.title}</span>
-						<span class="like" class:kept={player.likes(row.id)}><Like id={row.id} small /></span>
-						{#if saving !== undefined}
-							<span
-								class="saving"
-								class:landed={saving === 1}
-								title={saving === 1 ? 'Downloaded' : 'Downloading'}
-							>
-								<Ring done={saving} size={14} />
+						{#if saving && saving !== 'waiting'}
+							<!-- the download mark stands before the heart, a ring filling round a disc
+							     that is left alone once the song is in; a queued song shows nothing -->
+							<span class="saving" title={saving === 'done' ? 'Downloaded' : undefined}>
+								<Ring done={saving === 'done' ? 1 : (downloads.of(row.id) ?? 0)} backdrop />
 							</span>
 						{/if}
+						<span class="like" class:kept={player.likes(row.id)}><Like id={row.id} small /></span>
 					</span>
 				{:else if column.key === 'album'}
 					<span class="cell muted">{shelf.get(row.album)?.title ?? ''}</span>
@@ -154,23 +163,6 @@
 	.saving {
 		display: flex;
 		flex: none;
-		border-radius: 50%;
-		background: color-mix(in srgb, var(--m-primary) 14%, transparent);
-	}
-
-	.saving.landed {
-		background: var(--m-primary);
-		color: var(--m-primary-foreground);
-	}
-
-	.saving.landed :global(.ring) {
-		color: var(--m-primary-foreground);
-	}
-
-	.saving.landed :global(.track),
-	.saving.landed :global(.fill) {
-		opacity: 0;
-		transition: opacity 600ms ease;
 	}
 
 	.cell {

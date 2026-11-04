@@ -28,6 +28,11 @@ export type Item = {
 	width?: number;
 	/** A small button at the end of the row, such as the cross that cancels one download. */
 	action?: { icon: string; title: string; onclick: () => void };
+	/** Draws a search field that narrows the `filtered` rows below it by their label. */
+	search?: boolean;
+	/** A row the search narrows, and one it hides while anything is typed. */
+	filtered?: boolean;
+	lead?: boolean;
 	/** Draws the row as a quiet heading over the rows under it. */
 	heading?: boolean;
 	onclick?: () => void;

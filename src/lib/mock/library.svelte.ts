@@ -1,6 +1,6 @@
 /** What the listener saved and pinned in the mock, shared by the pages, the menus and the sidebar. */
 import { SvelteSet } from 'svelte/reactivity';
-import { pinned, shelf } from '$lib/mock/album';
+import { catalogue, pinned, shelf } from '$lib/mock/album';
 import { artists, playlists } from '$lib/mock/screens';
 
 export type Pin = (typeof pinned)[number];
@@ -13,7 +13,19 @@ const unfiled = new SvelteSet<string>();
 const slot = (list: string, track: string) => `${list}:${track}`;
 
 /** The pin an album, playlist or artist gets in the sidebar. */
-export function pinOf(kind: 'Album' | 'Playlist' | 'Artist', id: string): Pin | null {
+export function pinOf(kind: 'Album' | 'Playlist' | 'Artist' | 'Song', id: string): Pin | null {
+	if (kind === 'Song') {
+		const track = catalogue.get(id);
+		if (!track) return null;
+		return {
+			id,
+			title: track.title,
+			kind,
+			icon: 'music',
+			cover: track.cover,
+			to: { screen: 'album', id: track.album }
+		};
+	}
 	if (kind === 'Album') {
 		const album = shelf.get(id);
 		if (!album) return null;
@@ -70,6 +82,12 @@ export const library = {
 		return (
 			playlists.find((entry) => entry.id === list)?.tracks.some((one) => one.id === track) ?? false
 		);
+	},
+	/** The ids of songs a menu added to a playlist past what it starts with, in the order added. */
+	added(list: string) {
+		return [...filed]
+			.filter((key) => key.startsWith(`${list}:`))
+			.map((key) => key.slice(list.length + 1));
 	},
 	/** Adds songs to a playlist, or takes them out when it already holds every one. */
 	file(list: string, tracks: string[]) {

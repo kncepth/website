@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { catalogue } from '$lib/mock/album';
+	import { library } from '$lib/mock/library.svelte';
 	import { clock } from '$lib/mock/album';
 	import { libraryColumns, playlists } from '$lib/mock/screens';
 	import { player } from '$lib/mock/player.svelte';
@@ -12,7 +14,15 @@
 	let { id = 'quiet-hours' }: { id?: string } = $props();
 
 	const list = $derived(playlists.find((one) => one.id === id) ?? playlists[0]);
-	const rows = $derived(list.tracks);
+	const rows = $derived([
+		...list.tracks.filter((track) => library.holds(list.id, track.id)),
+		...library
+			.added(list.id)
+			.filter((id) => !list.tracks.some((track) => track.id === id))
+			.map((id) => catalogue.get(id))
+			.filter((track) => track !== undefined)
+			.map((track) => ({ ...track, added: 'Today' }))
+	]);
 	const total = $derived(rows.reduce((sum, track) => sum + track.length, 0));
 	const mine = $derived(rows.some((track) => track.id === player.id));
 	const holding = $derived(mine && player.playing);
@@ -72,7 +82,7 @@
 			{/snippet}
 		</PageHero>
 	</div>
-	<Table columns={libraryColumns} {rows} />
+	<Table columns={libraryColumns} {rows} playlist={list.id} />
 </div>
 
 <style>

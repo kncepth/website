@@ -22,7 +22,7 @@
 			{/snippet}
 		</PageHero>
 	</div>
-	<Table columns={historyColumns} rows={played} />
+	<Table columns={historyColumns} rows={played} history />
 </div>
 
 <style>

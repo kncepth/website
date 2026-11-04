@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { SvelteSet } from 'svelte/reactivity';
-	import { nav } from '$lib/mock/album';
+	import { catalogue, nav } from '$lib/mock/album';
 	import { library } from '$lib/mock/library.svelte';
 	import { menu } from '$lib/mock/menu.svelte';
-	import { albumMenu, artistMenu, playlistMenu } from '$lib/mock/menus';
+	import { albumMenu, artistMenu, playlistMenu, trackMenu } from '$lib/mock/menus';
 	import { route } from '$lib/mock/route.svelte';
 	import Card from './Card.svelte';
 	import Icon from './Icon.svelte';
@@ -95,11 +95,13 @@
 					onpress={() => route.go(entry.to)}
 					oncontext={(event: MouseEvent) =>
 						menu.at(event, `pin-${entry.id}`, () =>
-							entry.kind === 'Album'
-								? albumMenu(entry.id)
-								: entry.kind === 'Artist'
-									? artistMenu(entry.id)
-									: playlistMenu(entry.id)
+							entry.kind === 'Song' && catalogue.has(entry.id)
+								? trackMenu(catalogue.get(entry.id)!)
+								: entry.kind === 'Album'
+									? albumMenu(entry.id)
+									: entry.kind === 'Artist'
+										? artistMenu(entry.id)
+										: playlistMenu(entry.id)
 						)}
 				/>
 			</span>

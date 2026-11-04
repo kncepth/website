@@ -41,13 +41,13 @@ function downloadTile(
 		id: `tile-download-${key}`,
 		icon: 'download',
 		title: state === null ? 'Downloading. Click to stop' : state ? 'Remove download' : 'Download',
-		active: state === true,
+		active: state !== false,
 		ring: state === false ? undefined : share,
 		onclick: () => downloads.toggle(job, ids)
 	};
 }
 
-function pinTile(kind: 'Album' | 'Playlist' | 'Artist', id: string): Tile {
+function pinTile(kind: 'Album' | 'Playlist' | 'Artist' | 'Song', id: string): Tile {
 	const pinned = library.pinned(id);
 	return {
 		id: `tile-pin-${id}`,
@@ -58,24 +58,60 @@ function pinTile(kind: 'Album' | 'Playlist' | 'Artist', id: string): Tile {
 	};
 }
 
-/** The Add to playlist submenu: a new playlist, then the listener's own with a tick where it is. */
-function playlistRows(ids: string[]): Item[] {
+/** The Add to playlist submenu: a search over the playlists, New playlist, then the listener's
+ *  own. A playlist holding every song is checked and picking it takes them out with the menu
+ *  left open. An album is never checked, and picking a playlist for it closes the menu. */
+function playlistRows(ids: string[], { album = false }: { album?: boolean } = {}): Item[] {
 	return [
-		{ id: 'new-playlist', label: 'New playlist', icon: 'plus' },
-		{ id: 'playlist-separator', separator: true },
+		{ id: 'search-playlists', label: 'Search a playlist', search: true },
+		{ id: 'new-playlist', label: 'New playlist', icon: 'plus', lead: true },
+		{ id: 'playlist-separator', separator: true, lead: true },
 		...playlists.map((list) => ({
 			id: `playlist-${list.id}`,
 			label: list.name,
 			cover: list.cover,
-			checked: ids.length > 0 && ids.every((id) => library.holds(list.id, id)),
-			stays: true,
+			filtered: true,
+			checked: !album && ids.length > 0 && ids.every((id) => library.holds(list.id, id)),
+			stays: !album,
 			onclick: () => library.file(list.id, ids)
 		}))
 	];
 }
 
-/** A song's menu. `album` leaves out Go to Album on that album's own page. */
-export function trackMenu(track: Track, { album = '' }: { album?: string } = {}): Sheet {
+/** Play next, Add to queue and Play last for a set of songs. */
+function queueItems(ids: string[], prefix: string): Item[] {
+	return [
+		{
+			id: `${prefix}-next`,
+			label: 'Play next',
+			icon: 'list-start',
+			onclick: () => player.enqueue(ids, 'next')
+		},
+		{
+			id: `${prefix}-queue`,
+			label: 'Add to queue',
+			icon: 'list-plus',
+			onclick: () => player.enqueue(ids, 'end')
+		},
+		{
+			id: `${prefix}-last`,
+			label: 'Play last',
+			icon: 'list-end',
+			onclick: () => player.enqueue(ids, 'last')
+		}
+	];
+}
+
+/** A song's menu. `album` leaves out Go to Album on that album's own page, a `playlist` page
+ *  adds Remove from playlist and the history adds Remove from history, as the desktop does. */
+export function trackMenu(
+	track: Track,
+	{
+		album = '',
+		playlist = '',
+		history = false
+	}: { album?: string; playlist?: string; history?: boolean } = {}
+): Sheet {
 	const artist = artistOf(track.artist);
 	const destinations: Item[] = [
 		{
@@ -108,7 +144,8 @@ export function trackMenu(track: Track, { album = '' }: { album?: string } = {})
 				subject: 'Song',
 				name: track.title,
 				cover: track.cover
-			})
+			}),
+			pinTile('Song', track.id)
 		],
 		items: sections([
 			[
@@ -118,28 +155,19 @@ export function trackMenu(track: Track, { album = '' }: { album?: string } = {})
 					icon: 'square-plus',
 					width: 220,
 					submenu: playlistRows([track.id])
-				}
-			],
-			[
-				{
-					id: 'play-next',
-					label: 'Play next',
-					icon: 'list-start',
-					onclick: () => player.enqueue([track.id], 'next')
 				},
-				{
-					id: 'add-to-queue',
-					label: 'Add to queue',
-					icon: 'list-plus',
-					onclick: () => player.enqueue([track.id], 'end')
-				},
-				{
-					id: 'play-last',
-					label: 'Play last',
-					icon: 'list-end',
-					onclick: () => player.enqueue([track.id], 'last')
-				}
+				...(playlist
+					? [
+							{
+								id: 'remove-from-playlist',
+								label: 'Remove from playlist',
+								icon: 'x',
+								onclick: () => library.file(playlist, [track.id])
+							}
+						]
+					: [])
 			],
+			queueItems([track.id], 'track'),
 			[
 				{
 					id: 'go-to',
@@ -149,7 +177,8 @@ export function trackMenu(track: Track, { album = '' }: { album?: string } = {})
 					submenu: destinations
 				},
 				copyLink(track.id)
-			]
+			],
+			history ? [{ id: 'remove-from-history', label: 'Remove from history', icon: 'trash-2' }] : []
 		])
 	};
 }
@@ -177,23 +206,10 @@ export function albumMenu(id: string): Sheet {
 					label: 'Add to playlist',
 					icon: 'square-plus',
 					width: 220,
-					submenu: playlistRows(ids)
+					submenu: playlistRows(ids, { album: true })
 				}
 			],
-			[
-				{
-					id: 'album-next',
-					label: 'Play next',
-					icon: 'list-start',
-					onclick: () => player.enqueue(ids, 'next')
-				},
-				{
-					id: 'album-queue',
-					label: 'Add to queue',
-					icon: 'list-plus',
-					onclick: () => player.enqueue(ids, 'end')
-				}
-			],
+			queueItems(ids, 'album'),
 			[copyLink(id)]
 		])
 	};
@@ -214,8 +230,9 @@ export function playlistMenu(id: string): Sheet {
 			pinTile('Playlist', id)
 		],
 		items: sections([
-			[{ id: 'playlist-owner', label: list?.owner ?? 'You', icon: 'user' }],
+			queueItems(ids, 'playlist'),
 			[
+				{ id: 'playlist-visibility', label: 'Make private', icon: 'user' },
 				{ id: 'edit-playlist', label: 'Edit playlist', icon: 'pencil' },
 				{ id: 'delete-playlist', label: 'Delete playlist', icon: 'trash-2' }
 			],
