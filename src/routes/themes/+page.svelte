@@ -102,7 +102,13 @@
 
 		<ul class="grid">
 			{#each shown as theme (theme.id)}
-				<ThemeCard tag="li" name={theme.name} authors={theme.authors} variants={theme.variants}>
+				<ThemeCard
+					tag="li"
+					name={theme.name}
+					authors={theme.authors}
+					github={theme.github}
+					variants={theme.variants}
+				>
 					{#snippet meta()}
 						{#if downloads}
 							{@const count = downloads[theme.id] ?? 0}

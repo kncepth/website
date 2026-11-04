@@ -1,4 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
+import { githubProfile } from '../src/lib/theme-submitter';
 import {
 	check,
 	family,
@@ -36,7 +37,6 @@ type Submission = {
 const BODY_LIMIT = 64 * 1024;
 /** How many themes one visitor may submit a day. */
 const DAILY_LIMIT = 3;
-const GITHUB_USER = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
 const API = 'https://api.github.com';
 const MARKER = '<!-- sonora-theme-template:v1 -->';
 
@@ -152,7 +152,7 @@ function validate(submission: Submission): [string | null, Canonical][] {
 	};
 	if (!submission.tested) fail('confirm that you installed the theme and checked it in Sonora');
 	if (!submission.rights) fail('confirm that you made the theme or may share it');
-	if (submission.github && !GITHUB_USER.test(submission.github)) {
+	if (submission.github && !githubProfile(submission.github)) {
 		fail('that is not a GitHub username');
 	}
 	if (!slugged(submission.id)) {
@@ -171,6 +171,7 @@ function validate(submission: Submission): [string | null, Canonical][] {
 /** The commit and pull request a submission becomes. */
 type Pull = { branch: string; title: string; body: string; files: Record<string, string> };
 
+/** Prepares canonical theme files and the optional gallery credit for one pull request. */
 function draft(submission: Submission, files: [string | null, Canonical][]): Pull {
 	const { id } = submission;
 	const single = files[0][0] === null;
@@ -207,7 +208,7 @@ function draft(submission: Submission, files: [string | null, Canonical][]): Pul
 		'',
 		'## Checklist',
 		'',
-		'- [x] This pull request only changes files in `src/lib/themes`.',
+		'- [x] This pull request only changes theme files and their optional submitter credit.',
 		'- [x] It adds or changes exactly one theme: a single file, or one folder with a file per variant.',
 		'- [x] Files and folders are named in lowercase with hyphens, such as `night-owl.json` or `night-owl/dark.json`.',
 		'- [x] I installed the theme in Sonora and text stays readable on every screen I opened.',
@@ -218,12 +219,17 @@ function draft(submission: Submission, files: [string | null, Canonical][]): Pul
 		branch: `themes/${id}`,
 		title,
 		body,
-		files: Object.fromEntries(
-			files.map(([stem, file]) => [
-				single ? `src/lib/themes/${id}.json` : `src/lib/themes/${id}/${stem}.json`,
-				format(file)
-			])
-		)
+		files: {
+			...Object.fromEntries(
+				files.map(([stem, file]) => [
+					single ? `src/lib/themes/${id}.json` : `src/lib/themes/${id}/${stem}.json`,
+					format(file)
+				])
+			),
+			...(submission.github
+				? { [`src/lib/theme-submitters/${id}.json`]: JSON.stringify(submission.github) + '\n' }
+				: {})
+		}
 	};
 }
 

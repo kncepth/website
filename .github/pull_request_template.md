@@ -22,8 +22,11 @@
 ## Checklist
 
 <!-- Every box must be checked before review. -->
+<!-- To link the gallery's author names to your GitHub profile, add
+     src/lib/theme-submitters/<theme-id>.json containing your username as a JSON string,
+     for example "octocat". Leave the theme files' author fields unchanged. -->
 
-- [ ] This pull request only changes files in `src/lib/themes`.
+- [ ] This pull request only changes theme files and their optional submitter credit.
 - [ ] It adds or changes exactly one theme: a single file, or one folder with a file per variant.
 - [ ] Files and folders are named in lowercase with hyphens, such as `night-owl.json` or `night-owl/dark.json`.
 - [ ] I installed the theme in Sonora and text stays readable on every screen I opened.

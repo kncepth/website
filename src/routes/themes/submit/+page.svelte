@@ -300,6 +300,9 @@
 							spellcheck="false"
 							autocomplete="off"
 						/>
+						<span class="optional"
+							>Links the author names to your GitHub profile in the gallery.</span
+						>
 					</label>
 
 					<fieldset class="checks">
@@ -340,6 +343,7 @@
 						<ThemeCard
 							name={result.name}
 							authors={[...new Set(result.variants.map((entry) => entry.author))]}
+							{github}
 							variants={result.variants}
 						/>
 					{:else}

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ThemeVariant } from '$lib/data/themes';
+	import { githubProfile } from '$lib/theme-submitter';
 	import type { Snippet } from 'svelte';
 	import ThemeMiniature from './ThemeMiniature.svelte';
 
@@ -11,6 +12,7 @@
 	let {
 		name,
 		authors,
+		github,
 		variants,
 		tag = 'div',
 		meta,
@@ -18,6 +20,7 @@
 	}: {
 		name: string;
 		authors: string[];
+		github?: string;
 		variants: ThemeVariant[];
 		tag?: string;
 		meta?: Snippet;
@@ -28,6 +31,7 @@
 	let previewed: string | null = $state(null);
 
 	const shown = $derived(variants.find((variant) => variant.id === previewed) ?? variants[0]);
+	const profile = $derived(githubProfile(github));
 	const credit = $derived(
 		authors.length < 2
 			? authors.join('')
@@ -58,7 +62,9 @@
 				{/if}
 			</div>
 			<div class="byline">
-				<span class="author">by {credit}</span>
+				<span class="author">
+					by {#if profile}<a href={profile}>{credit}</a>{:else}{credit}{/if}
+				</span>
 				{@render meta?.()}
 			</div>
 		</div>
@@ -138,7 +144,13 @@
 		white-space: nowrap;
 	}
 
-	/* the dots touch through their padding, so the pointer never falls between two of them */
+	.author a:hover,
+	.author a:focus-visible {
+		color: var(--fg);
+		text-decoration: underline;
+	}
+
+	/* The dots' padding keeps the pointer from falling between them. */
 	.variants {
 		display: flex;
 		flex: none;

@@ -1,6 +1,7 @@
 import { website } from '$lib/data/links';
 import { darkColors, FIELDS } from '$lib/mock/theme';
 import { base64, bytes, check, family, link, type Canonical } from '$lib/theme-file';
+import { githubProfile } from '$lib/theme-submitter';
 
 /** One theme file of a community theme. */
 export type ThemeVariant = {
@@ -24,6 +25,8 @@ export type CommunityTheme = {
 	name: string;
 	/** Everyone who wrote a variant, in order of first appearance. */
 	authors: string[];
+	/** The submitter's GitHub username, shared by all variants. */
+	github?: string;
 	/** Sorted by file name, the order Sonora lists them in once installed. */
 	variants: ThemeVariant[];
 	/** The `sonora://theme/` link that carries every file. */
@@ -35,6 +38,11 @@ export type CommunityTheme = {
 const files = import.meta.glob(['../themes/*.json', '../themes/*/*.json'], {
 	eager: true,
 	query: '?raw',
+	import: 'default'
+}) as Record<string, string>;
+
+const submitters = import.meta.glob('../theme-submitters/*.json', {
+	eager: true,
 	import: 'default'
 }) as Record<string, string>;
 
@@ -91,6 +99,8 @@ function build(id: string, entries: [string | null, string][]): CommunityTheme {
 		throw new Error(`${where}: ${reason}`);
 	};
 	const checked = check(id, entries, fail);
+	const github = submitters[`../theme-submitters/${id}.json`];
+	if (github !== undefined && !githubProfile(github)) fail('invalid submitter GitHub username');
 
 	if (checked[0][0] === null) {
 		const file = checked[0][1];
@@ -99,6 +109,7 @@ function build(id: string, entries: [string | null, string][]): CommunityTheme {
 			id,
 			name: file.name,
 			authors: [file.author],
+			github,
 			variants: [variant(id, file)],
 			link: link(id, checked, fail),
 			download: { name: `${id}.json`, href: `data:application/json;base64,${base64(bytes(text))}` }
@@ -115,6 +126,7 @@ function build(id: string, entries: [string | null, string][]): CommunityTheme {
 		id,
 		name,
 		authors: [...new Set(variants.map((variant) => variant.author))],
+		github,
 		variants,
 		link: link(id, checked, fail),
 		download: { name: `${id}.zip`, href: `data:application/zip;base64,${base64(archive)}` }

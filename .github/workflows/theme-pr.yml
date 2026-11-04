@@ -26,6 +26,7 @@ jobs:
             const MARKER = '<!-- sonora-theme-template:v1 -->';
             const NOTE = '<!-- sonora-theme-check -->';
             const FOLDER = 'src/lib/themes/';
+            const CREDITS = 'src/lib/theme-submitters/';
             const pr = context.payload.pull_request;
             const { owner, repo } = context.repo;
             const body = (pr.body ?? '').replace(/\r\n/g, '\n');
@@ -39,16 +40,12 @@ jobs:
               pull_number: pr.number,
               per_page: 100
             });
-            const themed = files.some((file) => file.filename.startsWith(FOLDER));
+            const themed = files.some((file) => file.filename.startsWith(FOLDER) || file.filename.startsWith(CREDITS));
             if (!themed && !body.includes(MARKER)) return;
 
             const problems = [];
             if (!body.includes(MARKER)) {
               problems.push('The description does not use the theme template. Open a new pull request so GitHub fills it in, or paste `.github/pull_request_template.md` from this repository.');
-            }
-            const outside = files.filter((file) => !file.filename.startsWith(FOLDER));
-            if (outside.length) {
-              problems.push(`Only files in \`${FOLDER}\` may change. This pull request also changes ${outside.map((file) => `\`${file.filename}\``).join(', ')}.`);
             }
             // a theme is one file directly in the folder, or a folder of variants one level down
             const themes = files.filter((file) => file.filename.startsWith(FOLDER));
@@ -64,6 +61,13 @@ jobs:
             ];
             if (touched.length !== 1) {
               problems.push(`A pull request adds or changes exactly one theme, a single file or one folder of variants. This one changes ${touched.length}${touched.length ? `: ${touched.map((name) => `\`${name}\``).join(', ')}` : ''}.`);
+            }
+            const outside = files.filter((file) =>
+              !file.filename.startsWith(FOLDER) &&
+              !(touched.length === 1 && file.filename === `${CREDITS}${touched[0]}.json`)
+            );
+            if (outside.length) {
+              problems.push(`Only files in \`${FOLDER}\` and the theme's matching submitter credit in \`${CREDITS}\` may change. This pull request also changes ${outside.map((file) => `\`${file.filename}\``).join(', ')}.`);
             }
 
             const section = (title) => {
