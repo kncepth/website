@@ -1,0 +1,21 @@
+{
+	"name": "Prism Mix",
+	"author": "ADI",
+	"version": 1,
+	"theme": {
+		"background": "#17131f",
+		"foreground": "#f7f1ff",
+		"sidebar": "#241a2d",
+		"popover": "#30243b",
+		"secondary": "#25343d",
+		"muted": "#44344c",
+		"muted_foreground": "#c6aeca",
+		"border": "#b19ab866",
+		"primary": "#cb78ef",
+		"primary_foreground": "#24132c",
+		"progress_bar": "#38dfb4",
+		"selection": "#ffca5a",
+		"table_active": "#ff718833",
+		"table_active_border": "#ff7188"
+	}
+}
