@@ -92,7 +92,6 @@
 		{/if}
 		<PageHero
 			title={artist.name}
-			eyebrow="Artist"
 			cover={artist.image}
 			fallback="user-round"
 			circle

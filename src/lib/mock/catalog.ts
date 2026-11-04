@@ -221,8 +221,9 @@ const general: Section = {
 					key: 'entries',
 					title: 'Sidebar entries',
 					detail: 'The sections listed in the sidebar',
-					control: 'button',
-					label: 'Choose entries'
+					control: 'picker',
+					label: 'Choose entries',
+					options: ['Home', 'Search', 'Your Library', 'Local Music', 'History', 'Pinned']
 				},
 				{
 					key: 'language',

@@ -63,6 +63,13 @@ export const downloads = {
 		const share = total ? Math.min((total - songs + partial) / total, 1) : 0;
 		return { songs, share, minutes: Math.max(1, Math.ceil((songs * PER_SONG) / 60000)) };
 	},
+	/** Where a song's download stands: queued behind others, on its way, or saved. */
+	state(id: string): 'waiting' | 'running' | 'done' | undefined {
+		if (landed.has(id)) return 'done';
+		if (progress.has(id) || jobs[0]?.left[0] === id) return 'running';
+		if (jobs.some((job) => job.left.includes(id))) return 'waiting';
+		return undefined;
+	},
 	/** How far a song has got, 1 once it is saved, or `undefined` while it is not asked for. */
 	of(id: string) {
 		if (landed.has(id)) return 1;
