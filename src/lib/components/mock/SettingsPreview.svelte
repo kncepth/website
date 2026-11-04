@@ -3,6 +3,7 @@
 	import { accounts } from '$lib/mock/accounts.svelte';
 	import { player } from '$lib/mock/player.svelte';
 	import { settings } from '$lib/mock/settings.svelte';
+	import Logo from '../Logo.svelte';
 	import Icon from './Icon.svelte';
 
 	let { kind }: { kind: 'now-playing' | 'lyrics' | 'sound' | 'discord' } = $props();
@@ -44,13 +45,33 @@
 		levels.map((level, at) => `${(at / (BARS - 1)) * 100},${40 - level * 34}`).join(' ')
 	);
 
+	const album = $derived(shelf.get(player.track.album)?.title ?? '');
+	/** The buttons under the status: the track on its service unless details are hidden, and
+	 *  Sonora's own, in that order. */
+	const buttons = $derived([
+		...(settings.discordShown.includes('Provider') && !settings.discordAnonymous && accounts.current
+			? [`Listen on ${accounts.current.name}`]
+			: []),
+		...(settings.discordShown.includes('Sonora') ? ['Get Sonora'] : [])
+	]);
+
+	/** Time the way Discord counts it, minutes and seconds both padded. */
+	function discordClock(seconds: number) {
+		const whole = Math.floor(seconds);
+		const pad = (value: number) => String(value).padStart(2, '0');
+		const hours = Math.floor(whole / 3600);
+		return hours
+			? `${pad(hours)}:${pad(Math.floor((whole % 3600) / 60))}:${pad(whole % 60)}`
+			: `${pad(Math.floor(whole / 60))}:${pad(whole % 60)}`;
+	}
+
 	const status = $derived.by(() => {
 		const name = String(settings.discordName);
 		if (name === 'Title') return player.track.title;
 		if (name === 'Artist') return player.track.artist;
 		if (name === 'Artist - Title') return `${player.track.artist} - ${player.track.title}`;
 		if (name === 'Provider') return accounts.current?.name ?? 'Sonora';
-		if (name === 'Music') return 'music';
+		if (name === 'Music') return 'Music';
 		return 'Sonora';
 	});
 </script>
@@ -125,40 +146,52 @@
 			</div>
 		</div>
 	{:else}
-		<div class="discord" class:off={!settings.discord}>
-			<span class="eyebrow">Listening to {settings.discordAnonymous ? 'music' : status}</span>
-			<div class="activity">
-				<span class="art">
-					{#if settings.discordAnonymous}
-						<span class="blank"><Icon name="music" size={22} /></span>
-					{:else}
-						<img src={player.track.cover} alt="" />
-					{/if}
-					{#if settings.discordBadge}<span
-							class="badge"
-							style:background={accounts.current?.brand || '#fff'}
-							><Icon name={accounts.current?.glyph ?? 'music'} size={12} /></span
-						>{/if}
-				</span>
-				<span class="lines">
-					<span class="strong">{settings.discordAnonymous ? 'Music' : player.track.title}</span>
-					{#if !settings.discordAnonymous}
-						<span>{player.track.artist}</span>
-						<span class="faint">{player.playing ? '0:56 elapsed' : 'Paused'}</span>
-					{/if}
-				</span>
-			</div>
-			{#if settings.discordShown.length && !settings.discordAnonymous}
-				<div
-					class="buttons"
-					style:grid-template-columns="repeat({settings.discordShown.length}, 1fr)"
-				>
-					{#if settings.discordShown.includes('Provider')}
-						<span>Play on {accounts.current?.name ?? 'Sonora'}</span>
-					{/if}
-					{#if settings.discordShown.includes('Sonora')}<span>Get Sonora</span>{/if}
+		<div class="surface">
+			<div
+				class="discord"
+				class:off={!settings.discord}
+				role="group"
+				aria-label="Discord status preview"
+			>
+				<span class="header">Listening to {status}</span>
+				<div class="activity">
+					<span class="art">
+						{#if settings.discordAnonymous}
+							<span class="app"><Logo size={68} /></span>
+						{:else}
+							<img src={player.track.cover} alt="" />
+						{/if}
+						{#if settings.discordBadge && accounts.current}
+							<span class="badge" style:--brand={accounts.current.brand || '#5865f2'}>
+								<span class="disc"><Icon name={accounts.current.glyph} size={16} /></span>
+							</span>
+						{/if}
+					</span>
+					<span class="lines">
+						<span class="title"
+							>{settings.discordAnonymous ? 'Listening to music' : player.track.title}</span
+						>
+						{#if !settings.discordAnonymous}
+							<span class="text">{player.track.artist}</span>
+							{#if album}<span class="text">{album}</span>{/if}
+						{/if}
+						{#if player.playing && settings.discordAnonymous}
+							<span class="time lone">{discordClock(player.elapsed)} elapsed</span>
+						{:else if player.playing}
+							<span class="timing">
+								<span class="time">{discordClock(player.elapsed)}</span>
+								<span class="bar"><span style:width="{player.progress * 100}%"></span></span>
+								<span class="time">{discordClock(player.track.length)}</span>
+							</span>
+						{/if}
+					</span>
 				</div>
-			{/if}
+				{#if buttons.length}
+					<div class="buttons">
+						{#each buttons as label (label)}<span class="button">{label}</span>{/each}
+					</div>
+				{/if}
+			</div>
 		</div>
 	{/if}
 </div>
@@ -346,16 +379,25 @@
 		transition: width 120ms linear;
 	}
 
+	/* the card Discord shows for the status, in Discord's own colours and sizes */
+	.surface {
+		display: flex;
+		justify-content: center;
+		padding: 20px;
+		background: var(--m-background);
+	}
+
 	.discord {
 		display: flex;
+		width: 372px;
+		max-width: 100%;
 		flex-direction: column;
-		gap: 8px;
-		margin: 14px;
+		gap: 12px;
 		padding: 12px;
 		border-radius: 8px;
-		background: #232428;
-		color: #dbdee1;
-		font-size: 12px;
+		background: #2b2d31;
+		font-family: 'Inter', sans-serif;
+		line-height: 1.3;
 		transition: opacity 200ms ease;
 	}
 
@@ -363,36 +405,43 @@
 		opacity: 0.4;
 	}
 
-	.discord .eyebrow {
-		font-size: 11px;
-		font-weight: 700;
-		text-transform: uppercase;
-		color: #b5bac1;
+	.header {
+		overflow: hidden;
+		font-size: 14px;
+		color: #dbdee1;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.activity {
 		display: flex;
 		align-items: center;
-		gap: 10px;
+		gap: 12px;
 	}
 
 	.art {
 		position: relative;
 		flex: none;
-		width: 56px;
-		height: 56px;
+		width: 120px;
+		height: 120px;
 	}
 
-	.art img,
-	.blank {
+	.art img {
+		width: 100%;
+		height: 100%;
+		border-radius: 8px;
+		object-fit: cover;
+	}
+
+	.app {
 		display: flex;
 		width: 100%;
 		height: 100%;
 		align-items: center;
 		justify-content: center;
-		border-radius: 6px;
-		background: #313338;
-		object-fit: cover;
+		overflow: hidden;
+		border-radius: 8px;
+		background: #fff;
 	}
 
 	.badge {
@@ -400,39 +449,100 @@
 		right: -4px;
 		bottom: -4px;
 		display: flex;
-		padding: 2px;
-		border: 2px solid #232428;
+		padding: 4px;
 		border-radius: 50%;
-		background: #1db954;
-		color: #000;
+		background: #2b2d31;
+	}
+
+	.disc {
+		display: flex;
+		width: 32px;
+		height: 32px;
+		align-items: center;
+		justify-content: center;
+		border-radius: 50%;
+		background: var(--brand);
+		color: #fff;
 	}
 
 	.lines {
 		display: flex;
+		flex: 1;
 		min-width: 0;
 		flex-direction: column;
 	}
 
-	.strong {
+	.lines .title,
+	.lines .text {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.lines .title {
+		font-size: 16px;
 		font-weight: 600;
 		color: #f2f3f5;
 	}
 
-	.faint {
+	.lines .text {
+		font-size: 14px;
+		color: #dbdee1;
+	}
+
+	.timing {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		margin-top: 8px;
+	}
+
+	.time {
+		flex: none;
+		font-size: 14px;
+		font-variant-numeric: tabular-nums;
 		color: #949ba4;
 	}
 
-	.buttons {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 6px;
+	.time.lone {
+		margin-top: 4px;
 	}
 
-	.buttons span {
-		padding: 5px;
-		border-radius: 4px;
+	.bar {
+		flex: 1;
+		height: 4px;
+		overflow: hidden;
+		border-radius: 2px;
 		background: #4e5058;
-		text-align: center;
+	}
+
+	.bar span {
+		display: block;
+		height: 100%;
+		border-radius: 2px;
+		background: #dbdee1;
+	}
+
+	.buttons {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.button {
+		display: flex;
+		height: 32px;
+		align-items: center;
+		justify-content: center;
+		border-radius: 8px;
+		background: #4e5058;
+		font-size: 14px;
+		font-weight: 500;
 		color: #fff;
+		cursor: default;
+	}
+
+	.button:hover {
+		background: #6d6f78;
 	}
 </style>
