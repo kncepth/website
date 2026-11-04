@@ -38,9 +38,15 @@
 	const LEFT_MAX = 400;
 	const RIGHT_MIN = 240;
 	const RIGHT_MAX = 560;
-	const MIN_CONTENT = 400;
+	/** The least room the page keeps beside a docked left sidebar, the desktop's `SNUG`. */
+	const SNUG = 420;
+	/** The least the page keeps beside the right sidebar, the desktop's `MIN_CONTENT`. */
+	const MIN_CONTENT = 200;
 
+	/** Whether the listener wants the left sidebar open, kept while the window is too cramped. */
 	let left = $state(true);
+	/** What the toggle chose while cramped, until the room changes again. */
+	let forced = $state<boolean | null>(null);
 	let right = $state(true);
 	let leftWidth = $state(195);
 	let rightWidth = $state(254);
@@ -65,13 +71,27 @@
 	);
 
 	const still = $derived(settings.motion === 'Never');
-	const content = $derived(WIDTH - (left ? leftWidth + 1 : 0) - (right ? rightWidth + 1 : 0));
+	// the desktop's `adapt`: with too little room beside both sidebars the left one steps
+	// aside, and its toggle then lays it over the page instead of beside it
+	const cramped = $derived(WIDTH - leftWidth - (right ? rightWidth : 0) < SNUG);
+	const shown = $derived(forced ?? (left && !cramped));
+	const overlays = $derived(cramped && shown);
+	const docked = $derived(shown && !overlays);
+	const content = $derived(WIDTH - (docked ? leftWidth + 1 : 0) - (right ? rightWidth + 1 : 0));
 	const leftMax = $derived(
-		Math.max(LEFT_MIN, Math.min(LEFT_MAX, WIDTH - (right ? rightWidth : 0) - MIN_CONTENT))
+		Math.max(LEFT_MIN, Math.min(LEFT_MAX, WIDTH - (right ? rightWidth : 0) - SNUG))
 	);
-	const rightMax = $derived(
-		Math.max(RIGHT_MIN, Math.min(RIGHT_MAX, WIDTH - (left ? leftWidth : 0) - MIN_CONTENT))
-	);
+	const rightMax = $derived(Math.max(RIGHT_MIN, Math.min(RIGHT_MAX, WIDTH - MIN_CONTENT)));
+
+	$effect(() => {
+		void cramped;
+		forced = null;
+	});
+
+	function toggleLeft() {
+		if (cramped) forced = !shown;
+		else left = !left;
+	}
 
 	let fading = $state(false);
 	let settle = 0;
@@ -135,9 +155,9 @@
 			{#if full}
 				<Fullscreen bind:panel={stage} onleave={() => (full = false)} />
 			{:else}
-				<TitleBar bind:left bind:right />
+				<TitleBar left={shown} {docked} ontoggle={toggleLeft} bind:right />
 				<div class="body">
-					{#if left}
+					{#if docked}
 						<Sidebar />
 					{/if}
 					{#if at.screen === 'home'}
@@ -169,7 +189,16 @@
 					{:else if right}
 						<Aside {tab} />
 					{/if}
-					{#if left}
+					{#if overlays}
+						<button
+							type="button"
+							class="dismiss"
+							aria-label="Close the sidebar"
+							onclick={() => (forced = false)}
+						></button>
+						<div class="overlay"><Sidebar /></div>
+					{/if}
+					{#if docked}
 						<Grip
 							side="left"
 							bind:width={leftWidth}
@@ -230,6 +259,41 @@
 		display: flex;
 		flex: 1;
 		min-height: 0;
+	}
+
+	.dismiss {
+		position: absolute;
+		inset: 0;
+		z-index: 5;
+		padding: 0;
+		border: 0;
+		background: color-mix(in srgb, var(--m-background) 35%, transparent);
+		cursor: default;
+		animation: fade 200ms ease;
+	}
+
+	.overlay {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 0;
+		z-index: 6;
+		display: flex;
+		box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
+		animation: slide 250ms cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	@keyframes fade {
+		from {
+			opacity: 0;
+		}
+	}
+
+	@keyframes slide {
+		from {
+			transform: translateX(-12px);
+			opacity: 0;
+		}
 	}
 
 	.fading,

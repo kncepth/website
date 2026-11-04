@@ -3,7 +3,19 @@
 	import Control from './Control.svelte';
 	import Downloads from './Downloads.svelte';
 
-	let { left = $bindable(), right = $bindable() }: { left: boolean; right: boolean } = $props();
+	let {
+		left,
+		docked = left,
+		ontoggle,
+		right = $bindable()
+	}: {
+		/** Whether the left sidebar shows, docked beside the page or laid over it. */
+		left: boolean;
+		/** Whether it shows docked, which gives the title bar's leading part its width. */
+		docked?: boolean;
+		ontoggle: () => void;
+		right: boolean;
+	} = $props();
 
 	const at = $derived(route.now);
 	const listing = $derived(
@@ -29,12 +41,12 @@
 </script>
 
 <div class="bar">
-	<div class="leading" style:width={left ? 'var(--m-left)' : undefined}>
+	<div class="leading" style:width={docked ? 'var(--m-left)' : undefined}>
 		<Control
 			icon={left ? 'panel-left-close' : 'panel-left-open'}
 			title="Toggle sidebar"
 			small
-			onclick={() => (left = !left)}
+			onclick={ontoggle}
 		/>
 	</div>
 
