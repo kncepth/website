@@ -17,6 +17,7 @@
 	import Fullscreen from './Fullscreen.svelte';
 	import Detail from './Detail.svelte';
 	import Artist from './screens/Artist.svelte';
+	import Equalizer from './screens/Equalizer.svelte';
 	import History from './screens/History.svelte';
 	import Home from './screens/Home.svelte';
 	import Library from './screens/Library.svelte';
@@ -133,7 +134,12 @@
 					{:else if at.screen === 'history'}
 						<History />
 					{:else if at.screen === 'settings'}
-						<Settings tab={at.tab ?? 'General'} />
+						<Settings
+							tab={at.tab ?? 'General'}
+							onequalizer={() => route.go({ screen: 'equalizer' })}
+						/>
+					{:else if at.screen === 'equalizer'}
+						<Equalizer />
 					{:else if at.screen === 'artist'}
 						<Artist id={at.id ?? 'chopin'} />
 					{:else if at.screen === 'playlist'}

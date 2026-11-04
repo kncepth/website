@@ -1,7 +1,6 @@
 /** The version the mock reports when GitHub cannot be reached at build time. */
 export const version = '0.47.0';
 
-
 export const startups = [
 	'Home',
 	'Search',
@@ -108,7 +107,6 @@ export const team = [
 
 export const notice =
 	'Copyright © 2026 Sonora Contributors. Sonora comes with absolutely no warranty. It is free software, and you are welcome to redistribute it under the terms of the GNU General Public License version 3 or later. Sonora is unofficial and is not affiliated with Spotify AB.';
-
 
 export type Row = {
 	key: string;
