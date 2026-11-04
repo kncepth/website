@@ -7,7 +7,13 @@
 	import { route } from '$lib/mock/route.svelte';
 	import { radius, settings } from '$lib/mock/settings.svelte';
 	import { theme } from '$lib/theme.svelte';
+	import { downloads } from '$lib/mock/downloads.svelte';
+	import { menu } from '$lib/mock/menu.svelte';
+	import { together } from '$lib/mock/together.svelte';
 	import Aside from './Aside.svelte';
+	import Members from './Members.svelte';
+	import Menu from './Menu.svelte';
+	import SessionDialogs from './SessionDialogs.svelte';
 	import Fullscreen from './Fullscreen.svelte';
 	import Detail from './Detail.svelte';
 	import Artist from './screens/Artist.svelte';
@@ -72,13 +78,36 @@
 		return () => clearTimeout(settle);
 	});
 
-	onDestroy(() => player.release());
+	let app = $state<HTMLElement | null>(null);
+
+	$effect(() => {
+		menu.bind(app);
+		return () => menu.bind(null);
+	});
+
+	$effect(() => {
+		if (tab === 'members') right = true;
+	});
+
+	$effect(() => {
+		void at;
+		void full;
+		menu.close();
+	});
+
+	onDestroy(() => {
+		player.release();
+		together.release();
+		downloads.release();
+		menu.close();
+	});
 </script>
 
 <div class="stage" bind:clientWidth={room} style:height="{HEIGHT * scale}px">
 	<div class="sizer" style:width="{WIDTH * scale}px" style:height="{HEIGHT * scale}px">
 		<div
 			class="app"
+			bind:this={app}
 			class:fading={fading && !still}
 			class:still
 			{style}
@@ -113,12 +142,16 @@
 					{:else}
 						<Detail id={at.id ?? 'airs'} />
 					{/if}
-					{#if right}
+					{#if right && tab === 'members'}
+						<Members />
+					{:else if right}
 						<Aside {tab} />
 					{/if}
 				</div>
 				<PlayerBar bind:tab onfullscreen={() => (full = true)} />
 			{/if}
+			<SessionDialogs />
+			<Menu width={WIDTH} height={HEIGHT} />
 		</div>
 	</div>
 </div>
@@ -137,6 +170,7 @@
 	}
 
 	.app {
+		position: relative;
 		display: flex;
 		width: 1180px;
 		height: 730px;

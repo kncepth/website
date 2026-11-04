@@ -6,6 +6,7 @@
 	import Cover from './Cover.svelte';
 	import Like from './Like.svelte';
 	import Scrubber from './Scrubber.svelte';
+	import Sessions from './Sessions.svelte';
 
 	let { tab = $bindable(), onfullscreen }: { tab: string; onfullscreen?: () => void } = $props();
 
@@ -73,6 +74,7 @@
 
 	<div class="side">
 		<div class="tabs">
+			<Sessions onmembers={() => (tab = 'members')} />
 			<Control
 				icon="mic-vocal"
 				title="Lyrics"
