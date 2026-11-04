@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { menu } from '$lib/mock/menu.svelte';
+	import { trackMenu } from '$lib/mock/menus';
 	import { untrack } from 'svelte';
 	import { catalogue } from '$lib/mock/album';
 	import { lyricsFor } from '$lib/mock/lyrics';
@@ -42,12 +44,15 @@
 	);
 
 	let roll = $state<HTMLElement | null>(null);
+	/** The lyrics' width, which a resized panel changes, so the lines rewrap and the pin moves. */
+	let span = $state(0);
 	let sheet = $state<HTMLElement | null>(null);
 	let lift = $state(0);
 	let veils = $state<number[]>([]);
 
 	$effect(() => {
 		void active;
+		void span;
 		void settings.blur;
 		if (!roll || !sheet) return;
 		const line = sheet.children[Math.max(active, 0)];
@@ -155,6 +160,7 @@
 	$effect(() => {
 		void active;
 		void tab;
+		void span;
 		untrack(measure);
 		if (settled) return;
 		settled = true;
@@ -233,7 +239,7 @@
 	{/if}
 
 	{#if tab === 'lyrics' && verses.length}
-		<div class="verses" bind:this={roll}>
+		<div class="verses" bind:this={roll} bind:clientWidth={span}>
 			<div class="sheet" bind:this={sheet} style:transform="translateY({lift}px)">
 				{#each verses as line, index (line.start)}
 					<p
@@ -306,6 +312,8 @@
 						tint="var(--m-muted-foreground)"
 						onplay={() => player.select(track.id)}
 						onpress={() => player.select(track.id)}
+						oncontext={(event: MouseEvent) =>
+							menu.at(event, `track-${track.id}`, () => trackMenu(track))}
 					/>
 				{/each}
 			{/if}
@@ -336,6 +344,8 @@
 						cover={track.cover}
 						onplay={() => player.select(track.id)}
 						onpress={() => player.select(track.id)}
+						oncontext={(event: MouseEvent) =>
+							menu.at(event, `track-${track.id}`, () => trackMenu(track))}
 						action={remove}
 					/>
 				{/each}
@@ -350,6 +360,8 @@
 						cover={track.cover}
 						onplay={() => player.select(track.id)}
 						onpress={() => player.select(track.id)}
+						oncontext={(event: MouseEvent) =>
+							menu.at(event, `track-${track.id}`, () => trackMenu(track))}
 						action={remove}
 					/>
 				{/each}
@@ -363,7 +375,7 @@
 		display: flex;
 		flex: none;
 		flex-direction: column;
-		width: 254px;
+		width: var(--m-right, 254px);
 		overflow: hidden;
 		background: var(--m-background);
 		border-left: 1px solid var(--m-border);
@@ -438,6 +450,16 @@
 		gap: 14px;
 		will-change: transform;
 		transition: transform 520ms cubic-bezier(0.33, 1, 0.68, 1);
+	}
+
+	/* a line is set no wider than the desktop's REACH, 24 verse sizes, and centred in the lane,
+	   so a wide panel leaves room either side rather than running the lyrics edge to edge */
+	.verse,
+	.credit {
+		align-self: center;
+		width: 100%;
+		max-width: calc(var(--m-verse) * 24);
+		box-sizing: border-box;
 	}
 
 	.verse {

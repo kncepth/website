@@ -12,6 +12,7 @@
 		disabled = false,
 		size = 0,
 		trailing = '',
+		wide = false,
 		onclick = undefined
 	}: {
 		icon?: string;
@@ -24,6 +25,7 @@
 		disabled?: boolean;
 		size?: number;
 		trailing?: string;
+		wide?: boolean;
 		onclick?: (event: MouseEvent) => void;
 	} = $props();
 </script>
@@ -34,6 +36,7 @@
 	class:small
 	class:selected
 	class:squared={!label}
+	class:wide
 	style:width={size ? `${size}px` : undefined}
 	style:padding={size ? '0' : undefined}
 	aria-label={title}
@@ -74,6 +77,10 @@
 		width: 40px;
 	}
 
+	.wide {
+		min-width: 96px;
+	}
+
 	.small.squared {
 		width: 32px;
 	}
@@ -112,6 +119,15 @@
 	.filled {
 		background: var(--m-primary);
 		color: var(--m-primary-foreground);
+	}
+
+	.destructive {
+		background: var(--m-danger);
+		color: var(--m-danger-foreground);
+	}
+
+	.destructive:hover {
+		background: var(--m-danger-hover);
 	}
 
 	.filled:hover {

@@ -50,7 +50,36 @@ export const settings = $state({
 	discordBadge: true,
 	discordAnonymous: false,
 
-	updates: false
+	updates: false,
+	channel: 'Stable',
+
+	playerBar: 'Classic',
+	playerBarTransparent: true,
+	osFullscreen: false,
+	streamQuality: 'High',
+	sessionsButton: true,
+	sessionsOfficial: true,
+	spotifyConnect: true,
+	connectName: 'Sonora',
+	outputDevice: 'System default',
+	sampleRate: 48,
+	buffer: 512,
+	matchRate: false,
+	keepTracks: true,
+	cacheSize: '2 GB',
+	offline: false,
+	discordHideOnConnect: true,
+	discordButtons: true,
+	lyricsOrder: ['Spotify', 'LRCLIB', 'Musixmatch', 'NetEase', 'Genius'],
+	lyricsOff: [] as string[],
+	sleepAfter: 0,
+	cacheGb: 2,
+	discordShown: ['Provider', 'Sonora'] as string[],
+	sessionsServer: '',
+	connectCustom: '',
+	scripts: ['Japanese', 'Chinese', 'Korean'] as string[],
+	scrobbles: { lastfm: true } as Record<string, boolean>,
+	linked: ['lastfm'] as string[]
 });
 
 export const radius = (): number => rounding[settings.corners] ?? 10;

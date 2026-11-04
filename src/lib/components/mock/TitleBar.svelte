@@ -1,8 +1,21 @@
 <script lang="ts">
 	import { route } from '$lib/mock/route.svelte';
 	import Control from './Control.svelte';
+	import Downloads from './Downloads.svelte';
 
-	let { left = $bindable(), right = $bindable() }: { left: boolean; right: boolean } = $props();
+	let {
+		left,
+		docked = left,
+		ontoggle,
+		right = $bindable()
+	}: {
+		/** Whether the left sidebar shows, docked beside the page or laid over it. */
+		left: boolean;
+		/** Whether it shows docked, which gives the title bar's leading part its width. */
+		docked?: boolean;
+		ontoggle: () => void;
+		right: boolean;
+	} = $props();
 
 	const at = $derived(route.now);
 	const listing = $derived(
@@ -13,15 +26,27 @@
 	);
 	const carded = $derived((at.screen === 'library' || at.screen === 'local') && at.tab !== 'Songs');
 	const filed = $derived(listing || carded);
+	const refreshes = $derived(
+		at.screen !== 'search' && at.screen !== 'settings' && at.screen !== 'equalizer'
+	);
+
+	let turning = $state(false);
+	let settle = 0;
+
+	function refresh() {
+		clearTimeout(settle);
+		turning = true;
+		settle = setTimeout(() => (turning = false), 900);
+	}
 </script>
 
 <div class="bar">
-	<div class="leading" style:width={left ? '195px' : undefined}>
+	<div class="leading" style:width={docked ? 'var(--m-left)' : undefined}>
 		<Control
 			icon={left ? 'panel-left-close' : 'panel-left-open'}
 			title="Toggle sidebar"
 			small
-			onclick={() => (left = !left)}
+			onclick={ontoggle}
 		/>
 	</div>
 
@@ -41,14 +66,18 @@
 				disabled={!route.ahead}
 				onclick={() => route.forward()}
 			/>
+			{#if refreshes}
+				<span class="refresh" class:turning>
+					<Control icon="refresh-cw" title="Refresh" size={28} onclick={refresh} />
+				</span>
+			{/if}
 		</div>
+
+		<Downloads />
 
 		<div class="tools">
 			{#if carded && at.tab === 'Playlists'}
 				<Control icon="plus" title="New playlist" small />
-			{/if}
-			{#if listing}
-				<Control icon="columns-3" title="Columns" small />
 			{/if}
 			{#if filed}
 				<Control icon="funnel" title="Filters" small tint="muted" />
@@ -68,7 +97,6 @@
 			icon={right ? 'panel-right-close' : 'panel-right-open'}
 			title="Show or hide lyrics and queue"
 			small
-			selected={right}
 			onclick={() => (right = !right)}
 		/>
 	</div>
@@ -109,8 +137,27 @@
 		gap: 3.5px;
 	}
 
-	.tools {
+	.refresh {
+		display: flex;
+	}
+
+	.refresh.turning :global(svg) {
+		animation: turn 900ms cubic-bezier(0.33, 1, 0.68, 1);
+	}
+
+	@keyframes turn {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
+	.history {
 		flex: 1;
+		min-width: 0;
+	}
+
+	.tools {
+		flex: none;
 		min-width: 0;
 		justify-content: flex-end;
 	}

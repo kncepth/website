@@ -38,6 +38,8 @@
 	.scrim {
 		position: absolute;
 		inset: 0;
+		/* over a page's floating header, under the menus a dialog may open */
+		z-index: 30;
 		display: flex;
 		align-items: center;
 		justify-content: center;

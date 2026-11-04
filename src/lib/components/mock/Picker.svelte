@@ -5,11 +5,14 @@
 		value = '',
 		options = [],
 		width = 190,
+		start = false,
 		onpick = undefined
 	}: {
 		value?: string;
 		options?: string[];
 		width?: number;
+		/** Opens the menu from the left edge, for a picker at the start of its row. */
+		start?: boolean;
 		onpick?: (value: string) => void;
 	} = $props();
 
@@ -23,7 +26,7 @@
 	</button>
 
 	{#if open}
-		<div class="menu" style:width="{width}px">
+		<div class="menu" class:start style:width="{width}px">
 			{#each options as option (option)}
 				<button
 					type="button"
@@ -79,6 +82,9 @@
 		padding: 3.5px;
 		border: 1px solid var(--m-border);
 		border-radius: var(--m-radius);
+		max-height: 300px;
+		overflow-y: auto;
+		scrollbar-width: thin;
 		background: var(--m-popover);
 		color: var(--m-popover-foreground);
 		animation: rise 250ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -96,6 +102,11 @@
 		.menu {
 			animation: none;
 		}
+	}
+
+	.menu.start {
+		right: auto;
+		left: 0;
 	}
 
 	.item {

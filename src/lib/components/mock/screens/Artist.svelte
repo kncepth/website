@@ -1,10 +1,13 @@
 <script lang="ts">
+	import { menu } from '$lib/mock/menu.svelte';
+	import { albumMenu, artistMenu } from '$lib/mock/menus';
 	import { ABOUT_FALLBACK, albumsOf, artistColumns, artists, popularOf } from '$lib/mock/screens';
 	import { albums } from '$lib/mock/album';
 	import { player } from '$lib/mock/player.svelte';
 	import { route } from '$lib/mock/route.svelte';
 	import About from '../About.svelte';
 	import Card from '../Card.svelte';
+	import { library } from '$lib/mock/library.svelte';
 	import Control from '../Control.svelte';
 	import Modal from '../Modal.svelte';
 	import PageHero from '../PageHero.svelte';
@@ -79,7 +82,14 @@
 </script>
 
 <div class="frame">
-	<div class="screen">
+	<div class="screen" class:washed={!!artist.image}>
+		{#if artist.image}
+			<div class="banner" aria-hidden="true">
+				{#key artist.id}
+					<img src={artist.image} alt="" />
+				{/key}
+			</div>
+		{/if}
 		<PageHero
 			title={artist.name}
 			eyebrow="Artist"
@@ -92,7 +102,8 @@
 				<Control
 					variant="filled"
 					icon={holding ? 'pause' : 'play'}
-					label={holding ? 'Pause' : mine ? 'Resume' : 'Play now'}
+					label={holding ? 'Pause' : 'Play'}
+					wide
 					onclick={() => {
 						if (holding) player.pause();
 						else if (mine) player.resume();
@@ -100,8 +111,22 @@
 					}}
 				/>
 				<Control variant="outline" icon="shuffle" title="Shuffle" />
-				<Control variant="outline" icon="heart" title="Add to library" />
-				<Control icon="ellipsis" title="More" />
+				<Control
+					variant="outline"
+					icon={library.saved(artist.id) ? 'heart-filled' : 'heart'}
+					title={library.saved(artist.id) ? 'Remove from Favorites' : 'Add to Favorites'}
+					tint={library.saved(artist.id) ? 'primary' : ''}
+					onclick={() => library.toggle(artist.id)}
+				/>
+				<Control
+					icon="ellipsis"
+					title="More"
+					selected={menu.owner === `hero-${artist.id}`}
+					onclick={(event: MouseEvent) =>
+						menu.from(event.currentTarget as Element, `hero-${artist.id}`, () =>
+							artistMenu(artist.id, { here: true })
+						)}
+				/>
 			{/snippet}
 		</PageHero>
 
@@ -146,6 +171,8 @@
 							meta="{entry.released} · {entry.artist}"
 							cover={entry.cover}
 							onpress={() => route.go({ screen: 'album', id: entry.id })}
+							oncontext={(event: MouseEvent) =>
+								menu.at(event, `album-${entry.id}`, () => albumMenu(entry.id))}
 						/>
 					{/each}
 				</div>
@@ -198,6 +225,8 @@
 								meta="{entry.released} · {entry.artist}"
 								cover={entry.cover}
 								onpress={() => route.go({ screen: 'album', id: entry.id })}
+								oncontext={(event: MouseEvent) =>
+									menu.at(event, `album-${entry.id}`, () => albumMenu(entry.id))}
 							/>
 						{/each}
 					</div>
@@ -241,6 +270,7 @@
 	}
 
 	.screen {
+		position: relative;
 		display: flex;
 		flex: 1;
 		min-width: 0;
@@ -250,6 +280,55 @@
 		overflow-y: auto;
 		scrollbar-width: thin;
 		scrollbar-color: color-mix(in srgb, var(--m-muted-foreground) 45%, transparent) transparent;
+	}
+
+	/* an artist without a banner gets a wash of their portrait's colours above and behind the hero */
+	.washed {
+		padding-top: calc(24px + 84px);
+	}
+
+	.banner {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: calc(24px + 84px + 140px);
+		overflow: hidden;
+		pointer-events: none;
+		mask-image: linear-gradient(to bottom, #000 43.5%, transparent 100%);
+	}
+
+	.banner img {
+		position: absolute;
+		inset: -96px;
+		width: calc(100% + 192px);
+		height: calc(100% + 192px);
+		object-fit: cover;
+		filter: blur(48px) saturate(1.2);
+		animation: wash 600ms ease;
+	}
+
+	.banner::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background:
+			linear-gradient(
+				to bottom,
+				transparent 21.75%,
+				color-mix(in srgb, var(--m-background) 85%, transparent) 100%
+			),
+			color-mix(in srgb, var(--m-background) 30%, transparent);
+	}
+
+	@keyframes wash {
+		from {
+			opacity: 0;
+		}
+	}
+
+	.banner + :global(.hero) {
+		position: relative;
 	}
 
 	h2 {

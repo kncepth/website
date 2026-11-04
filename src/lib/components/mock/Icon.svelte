@@ -3,9 +3,9 @@
 	import { glyphs } from '$lib/mock/packs.svelte';
 	import { settings } from '$lib/mock/settings.svelte';
 
-	let { name, size = 16 }: { name: string; size?: number } = $props();
+	let { name, size = 16, pack = '' }: { name: string; size?: number; pack?: string } = $props();
 
-	const picked = $derived(shared.has(name) ? undefined : glyphs(settings.icons)?.get(name));
+	const picked = $derived(shared.has(name) ? undefined : glyphs(pack || settings.icons)?.get(name));
 	const markup = $derived(picked ?? icons.get(name) ?? '');
 	const painted = $derived(!picked && (filled.has(name) || solid.has(name)));
 	const drawn = $derived(!picked && !solid.has(name));

@@ -9,18 +9,20 @@ export const listenAgain = [...upcoming, ...similar.slice(0, 2)];
 
 export const quickPicks = [...tracks.slice(0, 5), ...upcoming.slice(0, 5), ...similar.slice(0, 5)];
 
-export const genres = [
-	'Classical',
-	'Folk',
-	'Baroque',
-	'Piano',
-	'Ambient',
-	'Romantic',
-	'Chamber',
-	'Opera',
-	'Minimalism',
-	'Choral'
-].map((name) => ({ id: name.toLowerCase(), name }));
+export const genres = (
+	[
+		['Classical', '/cover-pictures.webp'],
+		['Folk', '/cover-airs.webp'],
+		['Baroque', '/cover-seasons.webp'],
+		['Piano', '/cover-nocturnes.webp'],
+		['Ambient', '/mosaic-rainy-windows.webp'],
+		['Romantic', '/cover-peer-gynt.webp'],
+		['Chamber', '/mosaic-evening-studies.webp'],
+		['Opera', '/mosaic-long-drives.webp'],
+		['Minimalism', '/cover-gymnopedies.webp'],
+		['Choral', '/mosaic-morning-light.webp']
+	] as const
+).map(([name, cover]) => ({ id: name.toLowerCase(), name, cover }));
 
 export const favorites = [
 	...pick(['t1', 't2', 't5']),

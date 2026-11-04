@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { library } from '$lib/mock/library.svelte';
 	import { clock, shelf } from '$lib/mock/album';
 	import { player } from '$lib/mock/player.svelte';
 	import { settings } from '$lib/mock/settings.svelte';
@@ -8,11 +9,12 @@
 	import Control from './Control.svelte';
 	import Scrubber from './Scrubber.svelte';
 	import Visualizer from './Visualizer.svelte';
+	import VolumeRise from './VolumeRise.svelte';
 
 	let { panel = $bindable('lyrics'), onleave }: { panel?: string | null; onleave?: () => void } =
 		$props();
 
-	const WIDTH = 1180;
+	const WIDTH = 1170;
 	const HEIGHT = 730;
 	const TITLE_BAR = 36;
 	const PLAYER_BAR = 76;
@@ -84,9 +86,6 @@
 	}
 
 	const accent = $derived(legible(tokens['--m-primary']));
-	const level = $derived(
-		player.volume === 0 ? 'volume-x' : player.volume < 0.5 ? 'volume-1' : 'volume-2'
-	);
 </script>
 
 {#snippet pill()}
@@ -158,7 +157,7 @@
 					onclick={() => player.cycleRepeat()}
 				/>
 			</div>
-			<span class="volume"><Control icon={level} title="Volume" small tint="muted" /></span>
+			<span class="volume"><VolumeRise frosted={ambient} /></span>
 		</div>
 	</div>
 {/snippet}
@@ -201,11 +200,13 @@
 						<span class="title">{player.track.title}</span>
 						<span class="flank end">
 							<Control
-								icon={player.saved ? 'heart-filled' : 'heart'}
-								title={player.saved ? 'Remove from library' : 'Add to library'}
+								icon={library.saved(player.track.album) ? 'heart-filled' : 'heart'}
+								title={library.saved(player.track.album)
+									? 'Remove from Favorites'
+									: 'Add to Favorites'}
 								small
-								tint={player.saved ? 'primary' : 'muted'}
-								onclick={() => player.toggleSaved()}
+								tint={library.saved(player.track.album) ? 'primary' : 'muted'}
+								onclick={() => library.toggle(player.track.album)}
 							/>
 						</span>
 					</div>
@@ -219,7 +220,11 @@
 
 			{#if split}
 				<div class="panel">
-					<Aside tab={panel ?? 'lyrics'} stripped />
+					{#key panel}
+						<div class="entering">
+							<Aside tab={panel ?? 'lyrics'} stripped />
+						</div>
+					{/key}
 					<div class="floating">{@render pill()}</div>
 				</div>
 			{/if}
@@ -239,7 +244,7 @@
 	.fullscreen {
 		position: relative;
 		display: flex;
-		width: 1180px;
+		width: 1170px;
 		height: 730px;
 		flex-direction: column;
 		overflow: hidden;
@@ -355,6 +360,35 @@
 		font-weight: 600;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+
+	.entering {
+		display: flex;
+		flex: 1;
+		min-height: 0;
+		animation: enter 320ms cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	@keyframes enter {
+		from {
+			opacity: 0;
+			transform: translateY(6px);
+			filter: blur(2px);
+		}
+	}
+
+	/* over the ambient field, what is still to come takes the colour behind it rather than grey */
+	.dark .panel {
+		--m-muted-foreground: rgb(255 255 255 / 0.58);
+	}
+
+	.dark .artist {
+		color: rgb(255 255 255 / 0.62);
+	}
+
+	.dark .title,
+	.dark .artist {
+		text-shadow: 0 1px 6px rgb(0 0 0 / 0.18);
 	}
 
 	.artist {

@@ -1,28 +1,92 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import {
-		bands,
-		catalog,
+		corners,
+		drills,
+		layouts,
 		notice,
 		providers,
+		qualities,
 		scrobblers,
+		sections,
 		tabs,
 		team,
-		version
+		version,
+		visualizers,
+		type Block,
+		type Row,
+		type Section
 	} from '$lib/mock/catalog';
-	import type { Row } from '$lib/mock/catalog';
+	import { accounts } from '$lib/mock/accounts.svelte';
+	import { equalizer, presets, profiles } from '$lib/mock/equalizer.svelte';
+	import { installed } from '$lib/mock/installed.svelte';
+	import { menu } from '$lib/mock/menu.svelte';
+	import { reach } from '$lib/mock/packs.svelte';
 	import { settings } from '$lib/mock/settings.svelte';
-	import { themes } from '$lib/mock/theme';
+	import { colorsOf, dim, families } from '$lib/mock/theme';
+	import Logo from '../../Logo.svelte';
+	import ThemeMiniature from '../../ThemeMiniature.svelte';
 	import Control from '../Control.svelte';
 	import Icon from '../Icon.svelte';
+	import OptionCards from '../OptionCards.svelte';
 	import Picker from '../Picker.svelte';
 	import Scrubber from '../Scrubber.svelte';
+	import SettingsPreview from '../SettingsPreview.svelte';
 	import Switch from '../Switch.svelte';
 
-	let { tab = $bindable('General') }: { tab?: string } = $props();
+	let {
+		tab = $bindable('General'),
+		room = 640,
+		onequalizer = undefined
+	}: { tab?: string; room?: number; onequalizer?: () => void } = $props();
+
+	/** The desktop's column: the content less its margins, up to 640px. Tabs keep their
+	 *  names only while it is at least as wide as ROOMY, and show icons with tooltips below. */
+	const COLUMN = 640;
+	const ROOMY = 620;
+	const MARGIN = 24;
+	const width = $derived(Math.min(room - MARGIN * 2, COLUMN));
+	const named = $derived(width >= ROOMY);
+	/** The card grid's columns as the desktop's `grid`: fewer as the column narrows. */
+	const columns = $derived(width < 420 ? 2 : width < ROOMY ? 3 : 4);
+
+	/** Calls `measure` whenever the element resizes. */
+	function watch(node: HTMLElement, measure: () => void) {
+		const observer = new ResizeObserver(() => measure());
+		observer.observe(node);
+		return { destroy: () => observer.disconnect() };
+	}
+
+	function press(glyph: string) {
+		if (accounts.waiting) return;
+		if (accounts.stored(glyph)) accounts.use(glyph);
+		else accounts.signIn(glyph);
+	}
+	const initials = (name: string) =>
+		name
+			.split(/\s+/)
+			.map((part) => part[0])
+			.join('')
+			.slice(0, 2)
+			.toUpperCase();
 
 	let query = $state('');
 	let top = $state(125);
+	let drill = $state<string | null>(null);
+
+	const PACKS = ['Lucide', 'Iconoir', 'Remix', 'Solar'];
+	const sounds = [...Object.keys(presets), ...profiles];
+	const SAMPLE = ['house', 'heart-filled', 'play-filled', 'shuffle', 'search'];
+	/** The few rows the desktop still explains under their label. Every other row's
+	 *  explanation only feeds the settings search. */
+	const EXPLAINED = new Set(['saver', 'playerBarTransparent', 'matchRate']);
+	/** The theme rail's cards, as the desktop's `CARD`, `THUMB` and `SLICES`. */
+	const CARD = 150;
+	const THUMB = 96;
+	const SLICES = 4;
+	const RATES = [44.1, 48, 88.2, 96, 176.4, 192];
+	const BUFFERS = [128, 256, 512, 1024, 2048, 4096];
 
 	const listener = { name: 'Alex Rivera', id: '31mfqtv7xk2dwrbn4hpz8ecajlyu' };
 
@@ -31,218 +95,732 @@
 	const running = $derived(page.data.version?.replace(/^v/, '') ?? version);
 	const locales = $derived(['System', ...(page.data.locales ?? [])]);
 
+	onMount(() => {
+		for (const pack of PACKS) reach(pack);
+	});
+
 	function options(row: Row): string[] {
-		if (row.key === 'theme') return themes;
 		if (row.key === 'language') return locales;
 		return row.options ?? [];
 	}
-
-	const marks: Record<string, string> = {
-		General: 'settings',
-		Appearance: 'palette',
-		Playback: 'play',
-		Privacy: 'lock',
-		Integrations: 'link',
-		About: 'info'
-	};
 
 	const searching = $derived(query.trim().length > 0);
 
 	function shown(row: Row) {
 		if (row.needs === 'ambient') return settings.ambient;
 		if (row.needs === 'visualizer') return settings.visualizer !== 'Off';
-		if (row.needs === 'equalizer') return settings.equalizer;
 		if (row.needs === 'discord') return settings.discord;
+		if (row.needs === 'keepTracks') return settings.keepTracks;
+		if (row.needs === 'spotifyConnect') return settings.spotifyConnect;
 		if (row.needs === 'clientDecorations') return !settings.serverDecorations;
+		if (row.needs === 'customSessions') return !settings.sessionsOfficial;
+		if (row.needs === 'customConnect')
+			return settings.spotifyConnect && settings.connectName === 'Custom';
 		return true;
 	}
 
+	/** Every row of every tab that answers the query, with the section it lives in. */
 	const found = $derived.by(() => {
 		const needle = query.trim().toLowerCase();
 		if (!needle) return [];
-
-		const hits: Row[] = [];
-		for (const entries of Object.values(catalog)) {
-			for (const entry of entries) {
-				if (entry.kind !== 'row' || !entry.title || !shown(entry)) continue;
-				const title = entry.title.toLowerCase().includes(needle);
-				const detail = (entry.detail ?? '').toLowerCase().includes(needle);
-				if (title || detail) hits.push(entry);
+		const hits: { row: Row; where: string }[] = [];
+		for (const list of Object.values(sections)) {
+			for (const section of list) {
+				for (const group of section.groups) {
+					for (const row of group.rows) {
+						if (!shown(row)) continue;
+						const text = `${row.title} ${row.detail ?? ''}`.toLowerCase();
+						if (text.includes(needle)) hits.push({ row, where: section.title });
+					}
+				}
 			}
 		}
 		return hits;
 	});
 
-	const listed = $derived(
-		searching ? found : (catalog[tab] ?? []).filter((entry) => entry.kind !== 'row' || shown(entry))
+	const pages: Section[] = $derived(
+		drill ? [drills[drill].section] : (sections[tab] ?? sections.General)
 	);
+
+	function pick(next: string) {
+		query = '';
+		drill = null;
+		tab = next;
+	}
+
+	function open(row: Row) {
+		if (row.opens === 'equalizer') return onequalizer?.();
+		if (row.opens === 'community') return installed.browse(true);
+		if (row.opens && drills[row.opens]) drill = row.opens;
+	}
 
 	function reading(key: string): string {
 		if (key === 'opacity') return `${Math.round(settings.opacity * 100)}%`;
 		if (key === 'fontSize') return `${settings.fontSize} px`;
-		if (key === 'panelLyrics') return `${Math.round(settings.panelLyrics * 100)}%`;
-		if (key === 'fullscreenLyrics') return `${Math.round(settings.fullscreenLyrics * 100)}%`;
+		if (key === 'sleep') {
+			const after = settings.sleepAfter;
+			return after === 0 ? 'Off' : after > SLEEP_MAX ? 'End of track' : `${after} mins`;
+		}
+		if (key === 'cacheSize') return `${settings.cacheGb} GB`;
 		return '';
 	}
 
+	/** The sleep slider's range: off at the left, a minute a step up to two hours, then end of
+	 *  track at the far right, as the desktop's. */
+	const SLEEP_MAX = 120;
+	const CACHE_MAX = 20;
+
 	function fraction(key: string): number {
+		if (key === 'sleep') return settings.sleepAfter / (SLEEP_MAX + 1);
+		if (key === 'cacheSize') return (settings.cacheGb - 1) / (CACHE_MAX - 1);
 		if (key === 'opacity') return Number(settings.opacity);
 		if (key === 'fontSize') return (Number(settings.fontSize) - 10) / 14;
-		return Number(store[key]) / 2;
+		return (Number(store[key]) - 0.5) / 1.5;
 	}
 
-	const hertz = (hz: number) => (hz >= 1000 ? `${hz / 1000} kHz` : `${hz} Hz`);
+	function seek(key: string, to: number) {
+		if (key === 'opacity') settings.opacity = Math.round(Math.max(to, 0.3) * 100) / 100;
+		else if (key === 'fontSize') settings.fontSize = Math.round(10 + to * 14);
+		else if (key === 'sleep') {
+			settings.sleepAfter = Math.round(to * (SLEEP_MAX + 1));
+			settings.sleep = settings.sleepAfter > 0;
+		} else if (key === 'cacheSize') settings.cacheGb = Math.round(1 + to * (CACHE_MAX - 1));
+		else store[key] = Math.round((0.5 + to * 1.5) * 20) / 20;
+	}
+
+	function step(key: string, by: number) {
+		if (key === 'panelLyrics' || key === 'fullscreenLyrics') {
+			store[key] = Math.round(Math.min(Math.max(Number(store[key]) + by * 0.1, 0.5), 2) * 10) / 10;
+			return;
+		}
+		if (key === 'fontSize') {
+			settings.fontSize = Math.min(Math.max(Number(settings.fontSize) + by, 10), 24);
+			return;
+		}
+		const steps = key === 'sampleRate' ? RATES : BUFFERS;
+		const at = steps.indexOf(Number(store[key]));
+		store[key] = steps[Math.min(Math.max(at + by, 0), steps.length - 1)];
+	}
+
+	const stepped = (key: string) =>
+		key === 'panelLyrics' || key === 'fullscreenLyrics'
+			? `${Math.round(Number(store[key]) * 100)}%`
+			: key === 'fontSize'
+				? `${settings.fontSize} px`
+				: key === 'sampleRate'
+					? `${settings.sampleRate} kHz`
+					: `${settings.buffer} frames`;
+
+	/** The variant each family's card names, once one of its variants was chosen. */
+	let remembered = $state<Record<string, string>>({});
+
+	$effect(() => {
+		const family = families.find((one) => one.variants.includes(String(settings.theme)));
+		if (family && family.variants.length > 1)
+			remembered = { ...remembered, [family.id]: String(settings.theme) };
+	});
+
+	/** The variant a family's card shows: the chosen one, the one last chosen in it, else the
+	 *  first dark one, as the desktop picks for a dark system appearance. */
+	const variantOf = (family: { id: string; label: string; variants: string[] }) =>
+		family.variants.includes(String(settings.theme))
+			? String(settings.theme)
+			: (remembered[family.id] ?? family.variants.find((name) => dim(name)) ?? family.variants[0]);
+
+	const builtIn = (id: string) => id === 'system' || id === 'dark' || id === 'light';
+
+	/** The palettes a card slices its miniature into: System's dark and light, a family's first
+	 *  four variants, or a built-in theme's own. */
+	const slicesOf = (family: { id: string; label: string; variants: string[] }) =>
+		family.id === 'system' ? ['Dark', 'Light'] : family.variants.slice(0, SLICES);
+
+	function variants(family: { id: string; variants: string[] }, trigger: Element) {
+		menu.from(
+			trigger,
+			`variants-${family.id}`,
+			() => ({
+				width: 220,
+				items: family.variants.map((name) => ({
+					id: name,
+					label: name,
+					selected: settings.theme === name,
+					onclick: () => (settings.theme = name)
+				}))
+			}),
+			{ align: 'start' }
+		);
+	}
+
+	let rail = $state<HTMLElement | null>(null);
+	let edges = $state({ back: false, on: false });
+
+	function measureRail() {
+		if (!rail) return;
+		edges = {
+			back: rail.scrollLeft > 1,
+			on: rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 1
+		};
+	}
+
+	function slide(by: number) {
+		rail?.scrollBy({ left: by * (CARD + 12) * 2, behavior: 'smooth' });
+	}
+
+	function move(source: string, by: number) {
+		const order = [...settings.lyricsOrder];
+		const at = order.indexOf(source);
+		const to = at + by;
+		if (to < 0 || to >= order.length) return;
+		[order[at], order[to]] = [order[to], order[at]];
+		settings.lyricsOrder = order;
+	}
+
+	function toggleSource(source: string) {
+		settings.lyricsOff = settings.lyricsOff.includes(source)
+			? settings.lyricsOff.filter((one) => one !== source)
+			: [...settings.lyricsOff, source];
+	}
 </script>
+
+{#snippet row(entry: Row)}
+	{#if entry.control === 'equalizer'}
+		<!-- the way into the equalizer: the row opens its page, its picker and switch work in place -->
+		<div
+			class="whole"
+			role="button"
+			tabindex="0"
+			aria-label={entry.title}
+			onclick={() => open({ ...entry, opens: 'equalizer' })}
+			onkeydown={(event) => event.key === 'Enter' && open({ ...entry, opens: 'equalizer' })}
+		>
+			<span class="title">{entry.title}</span>
+			<span class="hold" role="presentation" onclick={(event) => event.stopPropagation()}>
+				<Picker
+					value={equalizer.sound}
+					options={sounds}
+					onpick={(name) => equalizer.choose(name)}
+				/>
+			</span>
+			<span class="hold" role="presentation" onclick={(event) => event.stopPropagation()}>
+				<Switch checked={equalizer.enabled} label="Equalizer" onchange={() => equalizer.toggle()} />
+			</span>
+			<Icon name="chevron-right" size={14} />
+		</div>
+	{:else if entry.control === 'drill' || entry.href}
+		{@const outward = !!entry.href && !entry.href.startsWith('/')}
+		<!-- a row that opens a page or a link is one whole button, its icon at the end -->
+		<svelte:element
+			this={entry.href ? 'a' : 'button'}
+			class="whole"
+			href={entry.href}
+			target={outward ? '_blank' : undefined}
+			rel={outward ? 'noreferrer' : undefined}
+			type={entry.href ? undefined : 'button'}
+			role={entry.href ? undefined : 'button'}
+			tabindex="0"
+			onclick={() => !entry.href && open(entry)}
+		>
+			<span class="title">{entry.title}</span>
+			{#if entry.value}<span class="reading">{entry.value}</span>{/if}
+			<Icon
+				name={entry.href || entry.opens === 'community' ? 'external-link' : 'chevron-right'}
+				size={14}
+			/>
+		</svelte:element>
+	{:else}
+		<div class="row">
+			<div class="text">
+				<span class="title">{entry.title}</span>
+				{#if entry.detail && (EXPLAINED.has(entry.key) || searching)}<span class="detail"
+						>{entry.detail}</span
+					>{/if}
+			</div>
+			<div class="control">
+				{#if entry.control === 'segmented'}
+					<div class="segments" role="radiogroup" aria-label={entry.title}>
+						{#each options(entry) as option (option)}
+							<button
+								type="button"
+								role="radio"
+								aria-checked={store[entry.key] === option}
+								class:on={store[entry.key] === option}
+								onclick={() => (store[entry.key] = option)}>{option}</button
+							>
+						{/each}
+					</div>
+				{:else if entry.control === 'toggles'}
+					<div class="segments" role="group" aria-label={entry.title}>
+						{#each options(entry) as option (option)}
+							{@const on = settings.discordShown.includes(option)}
+							<button
+								type="button"
+								aria-pressed={on}
+								class:on
+								onclick={() =>
+									(settings.discordShown = on
+										? settings.discordShown.filter((one) => one !== option)
+										: [...settings.discordShown, option])}>{option}</button
+							>
+						{/each}
+					</div>
+				{:else if entry.control === 'field'}
+					<input
+						class="text-field"
+						placeholder={entry.hint}
+						aria-label={entry.title}
+						value={String(store[entry.key] ?? '')}
+						oninput={(event) => (store[entry.key] = event.currentTarget.value)}
+					/>
+					{#if entry.label}<button type="button" class="action">{entry.label}</button>{/if}
+				{:else if entry.control === 'switch'}
+					{#if entry.extra && store[entry.key]}
+						<Picker
+							value={entry.extra}
+							options={['Japanese', 'Chinese', 'Korean', 'Cyrillic', 'Greek', 'Arabic']}
+							onpick={() => {}}
+						/>
+					{/if}
+					<Switch
+						checked={Boolean(store[entry.key])}
+						label={entry.title}
+						onchange={(value) => (store[entry.key] = value)}
+					/>
+				{:else if entry.control === 'picker'}
+					<Picker
+						value={String(store[entry.key] ?? options(entry)[0] ?? '')}
+						options={options(entry)}
+						onpick={(value) => (store[entry.key] = value)}
+					/>
+				{:else if entry.control === 'slider'}
+					<div class="slider">
+						<Scrubber
+							fraction={fraction(entry.key)}
+							label={entry.title}
+							onseek={(to: number) => seek(entry.key, to)}
+						/>
+						<span class="reading">{reading(entry.key)}</span>
+					</div>
+				{:else if entry.control === 'stepper'}
+					<Control icon="minus" title="Lower" small onclick={() => step(entry.key, -1)} />
+					<span class="reading">{stepped(entry.key)}</span>
+					<Control icon="plus" title="Raise" small onclick={() => step(entry.key, 1)} />
+				{:else if entry.control === 'button'}
+					{#if entry.value}<span class="reading">{entry.value}</span>{/if}
+					{#if entry.href}
+						<a
+							class="action"
+							href={entry.href}
+							target={entry.href.startsWith('/') ? undefined : '_blank'}
+							rel="noreferrer">{entry.label}</a
+						>
+					{:else}
+						<button type="button" class="action">{entry.label}</button>
+					{/if}
+				{:else if entry.key === 'version'}
+					<span class="reading">{running}</span>
+				{:else if entry.value}
+					<span class="reading">{entry.value}</span>
+				{/if}
+			</div>
+		</div>
+	{/if}
+{/snippet}
+
+{#snippet block(kind: Block)}
+	{#if kind === 'theme'}
+		<div class="rail-wrap">
+			{#if edges.back}
+				<button type="button" class="arrow-btn back" aria-label="Previous" onclick={() => slide(-1)}
+					><Icon name="chevron-left" size={14} /></button
+				>
+			{/if}
+			<div class="theme-rail" bind:this={rail} onscroll={measureRail} use:watch={measureRail}>
+				{#each [...families, ...installed.families] as family (family.id)}
+					{@const shown = variantOf(family)}
+					{@const chosen = family.variants.includes(String(settings.theme))}
+					{@const locked = settings.adaptive && !builtIn(family.id)}
+					{@const several = family.variants.length > 1}
+					<div class="theme-card" class:chosen class:locked style:width="{CARD}px">
+						<button
+							type="button"
+							class="thumb"
+							role="radio"
+							aria-checked={chosen}
+							aria-label={several ? shown : family.label}
+							title={locked
+								? 'This theme can be applied only when adaptive theme is disabled'
+								: undefined}
+							disabled={locked}
+							style:height="{THUMB}px"
+							onclick={() => (settings.theme = shown)}
+						>
+							{#each slicesOf(family) as variant, at (variant)}
+								{@const count = slicesOf(family).length}
+								<span
+									class="slice"
+									style:clip-path="inset(0 {100 - ((at + 1) / count) * 100}% 0 {(at / count) *
+										100}%)"
+								>
+									<ThemeMiniature colors={colorsOf(variant)} />
+								</span>
+							{/each}
+						</button>
+						{#if 'installed' in family}
+							<button
+								type="button"
+								class="trash"
+								title="Delete theme"
+								aria-label="Delete theme"
+								onclick={() => installed.confirmDelete(family.id)}
+								><Icon name="trash-2" size={14} /></button
+							>
+						{/if}
+						<button
+							type="button"
+							class="name"
+							disabled={locked}
+							onclick={(event) =>
+								several ? variants(family, event.currentTarget) : (settings.theme = shown)}
+						>
+							<span>{several ? shown : family.label}</span>
+							{#if several}<Icon name="chevron-down" size={12} />{/if}
+						</button>
+					</div>
+				{/each}
+				<div class="theme-card" style:width="{CARD}px">
+					<button
+						type="button"
+						class="thumb dashed"
+						aria-label="Open folder"
+						style:height="{THUMB}px"
+					>
+						<Icon name="folder-plus" size={18} />
+					</button>
+					<span class="name">Open folder</span>
+				</div>
+			</div>
+			{#if edges.on}
+				<button type="button" class="arrow-btn on" aria-label="Next" onclick={() => slide(1)}
+					><Icon name="chevron-right" size={14} /></button
+				>
+			{/if}
+		</div>
+	{:else if kind === 'icons'}
+		<OptionCards
+			options={PACKS.map((id) => ({ id, label: id }))}
+			{columns}
+			height={56}
+			chosen={(option) => settings.icons === option.id}
+			onpick={(option) => (settings.icons = option.id)}
+		>
+			{#snippet thumb(option)}
+				<span class="glyphs">
+					{#each SAMPLE as name (name)}<Icon {name} pack={option.id} size={16} />{/each}
+				</span>
+			{/snippet}
+		</OptionCards>
+	{:else if kind === 'corners'}
+		<OptionCards
+			options={corners.map((id) => ({ id, label: id }))}
+			{columns}
+			height={56}
+			chosen={(option) => settings.corners === option.id}
+			onpick={(option) => (settings.corners = option.id)}
+		>
+			{#snippet thumb(option)}
+				<span
+					class="corner"
+					style:border-radius="{{ Square: 0, Subtle: 6, Rounded: 10, Round: 20 }[option.id] ?? 6}px
+					0 0 0"
+				></span>
+			{/snippet}
+		</OptionCards>
+	{:else if kind === 'visualizer'}
+		<OptionCards
+			options={visualizers.map((id) => ({ id, label: id }))}
+			{columns}
+			height={56}
+			chosen={(option) => settings.visualizer === option.id}
+			onpick={(option) => (settings.visualizer = option.id)}
+		>
+			{#snippet thumb(option)}
+				<svg class="sketch" viewBox="0 0 60 28">
+					{#if option.id === 'Bars' || option.id === 'Bars and wave'}
+						{#each [10, 16, 22, 18, 12, 15, 9, 6] as height, at (at)}
+							<rect x={4 + at * 6.6} y={26 - height} width="4.4" {height} rx="1" />
+						{/each}
+					{/if}
+					{#if option.id === 'Wave' || option.id === 'Bars and wave'}
+						<path d="M2 20 C 12 4, 20 6, 28 14 S 46 26, 58 8" />
+					{/if}
+					{#if option.id === 'Off'}
+						<line x1="6" y1="14" x2="54" y2="14" />
+					{/if}
+				</svg>
+			{/snippet}
+		</OptionCards>
+	{:else if kind === 'layout'}
+		<OptionCards
+			options={layouts.map((id) => ({ id, label: id }))}
+			{columns}
+			height={64}
+			chosen={(option) => settings.playerBar === option.id}
+			onpick={(option) => (settings.playerBar = option.id)}
+		>
+			{#snippet thumb(option)}
+				<span
+					class="bar-sketch {option.id.toLowerCase()}"
+					class:frosted={settings.playerBarTransparent}
+				>
+					<span class="art"></span>
+					<span class="lines"><i></i><i></i></span>
+					<span class="keys"><i></i><i></i><i></i></span>
+					<span class="seek"></span>
+				</span>
+			{/snippet}
+		</OptionCards>
+	{:else if kind === 'quality'}
+		<OptionCards
+			options={qualities.map((one) => ({ id: one.id, label: one.id, detail: one.detail }))}
+			{columns}
+			height={48}
+			chosen={(option) => settings.streamQuality === option.id}
+			onpick={(option) => (settings.streamQuality = option.id)}
+		>
+			{#snippet thumb(option)}
+				<span class="levels">
+					{#each [0, 1, 2] as at (at)}
+						<i class:lit={at <= qualities.findIndex((one) => one.id === option.id)}></i>
+					{/each}
+				</span>
+			{/snippet}
+		</OptionCards>
+	{:else if kind === 'accounts'}
+		<div class="services" role="radiogroup" aria-label="Streaming services">
+			{#each providers as account (account.glyph)}
+				{@const active = account.glyph === accounts.active}
+				{@const kept = accounts.stored(account.glyph)}
+				{@const waiting = accounts.waiting === account.glyph}
+				<!-- the role is a radio for a kept account and a button for one to sign in to -->
+				<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+				<div
+					class="service"
+					class:active
+					class:pressable={!active && !waiting}
+					style:--brand={account.brand || 'var(--m-foreground)'}
+					role={kept ? 'radio' : 'button'}
+					aria-checked={kept ? active : undefined}
+					aria-label={account.name}
+					tabindex="0"
+					onclick={() => press(account.glyph)}
+					onkeydown={(event) => event.key === 'Enter' && press(account.glyph)}
+				>
+					<span class="mark"><Icon name={account.glyph} size={22} /></span>
+					<span class="text">
+						<span class="name">{account.name}</span>
+						{#if active}<span class="detail">In use</span>{/if}
+					</span>
+					{#if waiting}
+						<button
+							type="button"
+							class="action"
+							onclick={(event) => {
+								event.stopPropagation();
+								accounts.cancel();
+							}}>Cancel</button
+						>
+					{:else if kept}
+						<span class="leave">
+							<Control
+								icon="log-out"
+								title="Sign out"
+								small
+								tint="muted"
+								onclick={(event: MouseEvent) => {
+									event.stopPropagation();
+									accounts.signOut(account.glyph);
+								}}
+							/>
+						</span>
+						<span class="radio" class:on={active}><span class="hole"></span></span>
+					{:else}
+						<span class="sign">Sign in</span>
+					{/if}
+				</div>
+			{/each}
+		</div>
+	{:else if kind === 'scrobbling'}
+		{#each scrobblers as service (service.id)}
+			{@const linked = settings.linked.includes(service.id)}
+			{@const on = settings.scrobbles[service.id] ?? false}
+			<div class="row">
+				<div class="text"><span class="title">{service.name}</span></div>
+				<div class="control">
+					{#if linked}
+						{#if on}
+							<span class="reading status"
+								>{service.status.startsWith('Scrobbling') ? service.status : 'Connected'}</span
+							>
+						{/if}
+						<Switch
+							checked={on}
+							label={service.name}
+							onchange={(value) =>
+								(settings.scrobbles = { ...settings.scrobbles, [service.id]: value })}
+						/>
+						<button
+							type="button"
+							class="action"
+							onclick={() =>
+								(settings.linked = settings.linked.filter((one) => one !== service.id))}
+							>Disconnect</button
+						>
+					{:else}
+						<button
+							type="button"
+							class="action"
+							onclick={() => {
+								settings.linked = [...settings.linked, service.id];
+								settings.scrobbles = { ...settings.scrobbles, [service.id]: true };
+							}}>Connect</button
+						>
+					{/if}
+				</div>
+			</div>
+		{/each}
+	{:else if kind === 'priority'}
+		<div class="sources">
+			{#each settings.lyricsOrder as source, at (source)}
+				<div class="source" class:off={settings.lyricsOff.includes(source)}>
+					<Icon name="grip-vertical" size={14} />
+					<span class="rank">{at + 1}</span>
+					<span class="name">{source}</span>
+					<Control
+						icon="chevron-up"
+						title="Move up"
+						small
+						disabled={at === 0}
+						onclick={() => move(source, -1)}
+					/>
+					<Control
+						icon="chevron-down"
+						title="Move down"
+						small
+						disabled={at === settings.lyricsOrder.length - 1}
+						onclick={() => move(source, 1)}
+					/>
+					<Switch
+						checked={!settings.lyricsOff.includes(source)}
+						label={source}
+						onchange={() => toggleSource(source)}
+					/>
+				</div>
+			{/each}
+		</div>
+	{/if}
+{/snippet}
 
 <div class="settings">
 	<div class="screen" style:--m-top="{top}px">
-		<div class="sheet" style:padding-top="{top}px">
-			{#if !searching && tab === 'General'}
-				<div class="profile">
-					<span class="face">{listener.name.slice(0, 1)}</span>
-					<div class="who">
-						<span class="display">{listener.name}</span>
-						<span class="handle">{listener.id}</span>
-					</div>
-				</div>
-				<hr class="split" />
-			{/if}
-
-			{#each listed as entry, at (entry.kind === 'row' ? entry.key : `${entry.label}-${at}`)}
-				{#if entry.kind === 'title'}
-					<div class="group"><span class="eyebrow">{entry.label}</span></div>
-				{:else if entry.control === 'accounts'}
-					<div class="accounts">
-						<div class="text">
-							<span class="title">{entry.title}</span>
-							<span class="detail">{entry.detail}</span>
-						</div>
-						{#each providers as account (account.glyph)}
-							<div class="account" class:pressable={!account.active}>
-								<span class="radio" class:on={account.active}><span class="hole"></span></span>
-								<span class="logo"><Icon name={account.glyph} size={26} /></span>
-								<div class="text">
-									<span class="name">{account.name}</span>
-									<span class="detail">{account.status}</span>
-								</div>
-								{#if account.stored}
-									<Control icon="log-out" title="Sign out" size={32} />
-								{:else}
-									<span class="arrow"><Icon name="chevron-right" size={14} /></span>
-								{/if}
-							</div>
-						{/each}
-					</div>
-				{:else if entry.control === 'scrobbling'}
-					<div class="deck">
-						{#each scrobblers as service (service.id)}
-							<div class="account">
-								<div class="text">
-									<span class="title">{service.name}</span>
-									<span class="detail">{service.detail || service.status}</span>
-								</div>
-								{#if service.linked}
-									<Switch checked onchange={() => {}} />
-								{/if}
-								<button type="button" class="action">
-									{service.linked ? 'Disconnect' : 'Connect'}
-								</button>
-							</div>
-						{/each}
-					</div>
-				{:else if entry.control === 'bands'}
-					<div class="bands">
-						{#each bands as hz (hz)}
-							<div class="band">
-								<span class="db">0 dB</span>
-								<div class="slot"><span class="knob"></span></div>
-								<span class="hz">{hertz(hz)}</span>
-							</div>
-						{/each}
-					</div>
+		{#key `${tab}-${drill}-${searching}`}
+			<div class="sheet entering" style:padding-top="{top}px">
+				{#if searching}
+					{#each found as hit (hit.row.key)}
+						<span class="where">{hit.where}</span>
+						{@render row(hit.row)}
+					{/each}
+					{#if !found.length}
+						<p class="notice">Nothing here</p>
+					{/if}
 				{:else}
-					<div class="row">
-						<div class="text">
-							<span class="title">{entry.title}</span>
-							{#if entry.detail}<span class="detail">{entry.detail}</span>{/if}
-						</div>
-						<div class="control">
-							{#if entry.control === 'switch'}
-								{#if entry.extra}
-									<button type="button" class="action">{entry.extra}</button>
-								{/if}
-								<Switch
-									checked={Boolean(store[entry.key])}
-									onchange={(value) => (store[entry.key] = value)}
-								/>
-							{:else if entry.control === 'picker'}
-								{#if entry.extra}
-									<button type="button" class="action">{entry.extra}</button>
-								{/if}
-								<Picker
-									value={String(store[entry.key] ?? '')}
-									options={options(entry)}
-									onpick={(value) => (store[entry.key] = value)}
-								/>
-							{:else if entry.control === 'slider'}
-								<div class="slider">
-									<Scrubber fraction={fraction(entry.key)} label="" onseek={() => {}} />
-									<span class="reading">{reading(entry.key)}</span>
-								</div>
-							{:else if entry.control === 'button'}
-								{#if entry.value}<span class="reading">{entry.value}</span>{/if}
-								{#if entry.href}
-									<a class="action" href={entry.href} target="_blank" rel="noreferrer"
-										>{entry.label}</a
-									>
+					{#if drill}
+						<button type="button" class="back" onclick={() => (drill = null)}>
+							<Icon name="chevron-left" size={14} />
+							{drills[drill].tab}
+						</button>
+					{/if}
+
+					{#each pages as section, at (section.id)}
+						<h2 class="headline" class:later={at > 0}>
+							{section.title}
+						</h2>
+						{#if section.id === 'providers'}
+							<div class="profile">
+								{#if accounts.current}
+									<span class="face">{initials(listener.name)}</span>
+									<div class="who">
+										<span class="display">{listener.name}</span>
+										<span class="handle">{accounts.current.name} · {listener.id}</span>
+									</div>
 								{:else}
-									<button type="button" class="action">{entry.label}</button>
+									<span class="face blank"></span>
+									<div class="who">
+										<span class="display">Not signed in</span>
+										<span class="handle">Sign in to a streaming service below</span>
+									</div>
 								{/if}
-							{:else}
-								<span class="reading">{entry.value ?? running}</span>
-							{/if}
-						</div>
-					</div>
-				{/if}
-			{/each}
-
-			{#if !searching && tab === 'About'}
-				<div class="team">
-					<div class="cap">
-						<span class="eyebrow">Team</span>
-						<span class="rule"></span>
-					</div>
-					<div class="members">
-						{#each team as member (member.login)}
-							<a
-								class="member"
-								href="https://github.com/{member.login}"
-								target="_blank"
-								rel="noreferrer"
-							>
-								<img
-									class="avatar"
-									src="https://github.com/{member.login}.png"
-									width="34"
-									height="34"
-									alt=""
-								/>
-								<span class="ident">
-									<span class="login">{member.login}</span>
-									<span class="hint">GitHub</span>
-								</span>
-								<span class="role">{member.role}</span>
-							</a>
+							</div>
+						{:else if section.id === 'about'}
+							<div class="mark-row">
+								<span class="app"><Logo size={56} /></span>
+								<span class="display">Sonora</span>
+							</div>
+						{/if}
+						{#if section.preview}
+							<SettingsPreview kind={section.preview} />
+						{/if}
+						{#each section.groups as group, index (index)}
+							{@const rows = group.rows.filter(shown)}
+							<div class="group">
+								{#if group.title}
+									<div class="eyebrow">
+										{#if group.icon}<Icon name={group.icon} size={12} />{/if}
+										{group.title}
+									</div>
+								{/if}
+								{#if group.block && group.block !== 'priority'}{@render block(group.block)}{/if}
+								{#each rows as entry (entry.key)}
+									{@render row(entry)}
+								{/each}
+								{#if group.block === 'priority'}{@render block(group.block)}{/if}
+							</div>
 						{/each}
-					</div>
-				</div>
-				<p class="notice">{notice}</p>
-			{/if}
-
-			{#if searching && !found.length}
-				<p class="notice">Nothing here</p>
-			{/if}
-		</div>
+						{#if section.id === 'about'}
+							<div class="team">
+								<div class="cap">
+									<span class="eyebrow">Team</span>
+									<span class="rule"></span>
+								</div>
+								<div class="members">
+									{#each team as member (member.login)}
+										<a
+											class="member"
+											href="https://github.com/{member.login}"
+											target="_blank"
+											rel="noreferrer"
+										>
+											<img
+												class="avatar"
+												src="https://github.com/{member.login}.png"
+												width="34"
+												height="34"
+												alt=""
+											/>
+											<span class="ident">
+												<span class="login">{member.login}</span>
+												<span class="hint">GitHub</span>
+											</span>
+											<span class="role">{member.role}</span>
+										</a>
+									{/each}
+								</div>
+							</div>
+							<p class="notice">{notice}</p>
+						{/if}
+					{/each}
+				{/if}
+			</div>
+		{/key}
 	</div>
 
 	<header class="masthead" bind:clientHeight={top}>
@@ -251,20 +829,21 @@
 			<label class="field">
 				<Icon name="search" />
 				<input placeholder="Search settings" bind:value={query} />
+				<span class="keys" aria-hidden="true"><kbd>Ctrl</kbd><kbd>F</kbd></span>
 			</label>
 			<div class="categories">
-				{#each tabs as name (name)}
+				{#each tabs as entry (entry.id)}
 					<button
 						type="button"
 						class="chip"
-						class:on={!searching && tab === name}
-						onclick={() => {
-							query = '';
-							tab = name;
-						}}
+						class:on={!searching && tab === entry.id}
+						class:bare={!named}
+						title={named ? undefined : entry.id}
+						aria-label={entry.id}
+						onclick={() => pick(entry.id)}
 					>
-						<Icon name={marks[name]} />
-						{name}
+						<Icon name={entry.icon} />
+						{#if named}{entry.id}{/if}
 					</button>
 				{/each}
 			</div>
@@ -385,6 +964,124 @@
 		outline: none;
 	}
 
+	.keys {
+		display: flex;
+		gap: 3px;
+		flex: none;
+	}
+
+	kbd {
+		display: inline-flex;
+		align-items: center;
+		height: 20px;
+		padding: 0 5px;
+		border: 1px solid var(--m-border);
+		border-radius: 4px;
+		background: var(--m-secondary);
+		color: var(--m-muted-foreground);
+		font: inherit;
+		font-size: 11px;
+	}
+
+	.chip.bare {
+		width: 32px;
+		justify-content: center;
+		padding: 0;
+	}
+
+	.profile {
+		margin: 7px 0 3.5px;
+	}
+
+	.face.blank {
+		background: var(--m-secondary);
+		animation: pulse 1.4s ease-in-out infinite;
+	}
+
+	@keyframes pulse {
+		50% {
+			opacity: 0.55;
+		}
+	}
+
+	.mark-row {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		margin: 7px 0 3.5px;
+	}
+
+	.app {
+		display: flex;
+		overflow: hidden;
+		border-radius: 14px;
+	}
+
+	.services {
+		display: flex;
+		flex-direction: column;
+		padding-bottom: 7px;
+	}
+
+	.service {
+		display: flex;
+		height: 52px;
+		align-items: center;
+		gap: 10.5px;
+		margin: 0 -10.5px;
+		padding: 0 10.5px;
+		border-radius: var(--m-radius);
+		transition: background-color 160ms ease;
+	}
+
+	.service.pressable {
+		cursor: pointer;
+	}
+
+	.service.pressable:hover {
+		background: var(--m-secondary-hover);
+	}
+
+	.service.active {
+		background: var(--m-secondary-active);
+	}
+
+	.service .mark {
+		display: flex;
+		flex: none;
+		color: var(--m-muted-foreground);
+		transition: color 160ms ease;
+	}
+
+	.service.active .mark,
+	.service:hover .mark {
+		color: var(--brand);
+	}
+
+	.service .name {
+		font-weight: 500;
+	}
+
+	.leave {
+		display: flex;
+		opacity: 0;
+		transition: opacity 160ms ease;
+	}
+
+	.service.active .leave,
+	.service:hover .leave {
+		opacity: 1;
+	}
+
+	.sign {
+		font-size: 13px;
+		color: var(--m-muted-foreground);
+	}
+
+	.service:hover .sign {
+		color: var(--m-foreground);
+	}
+
 	.categories {
 		display: flex;
 		align-self: center;
@@ -429,10 +1126,6 @@
 		max-width: 682px;
 		margin: 0 auto;
 		padding: 0 21px 28px;
-	}
-
-	.group {
-		padding: 17.5px 0 3.5px;
 	}
 
 	.eyebrow {
@@ -716,5 +1409,519 @@
 	.role {
 		flex: none;
 		font-weight: 500;
+	}
+
+	.entering {
+		animation: page 320ms cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	@keyframes page {
+		from {
+			opacity: 0;
+			transform: translateY(6px);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.entering {
+			animation: none;
+		}
+	}
+
+	.headline {
+		display: flex;
+		align-items: center;
+		height: 40px;
+		margin: 0 0 10.5px;
+		font-size: 24px;
+		font-weight: 600;
+		letter-spacing: -0.01em;
+	}
+
+	.headline.later {
+		margin-top: 40px;
+	}
+
+	.group {
+		padding: 17.5px 0 3.5px;
+	}
+
+	.group .eyebrow {
+		display: flex;
+		align-items: center;
+		gap: 7px;
+		margin-bottom: 8px;
+	}
+
+	.where {
+		display: block;
+		margin-top: 14px;
+		font-size: 11px;
+		font-weight: 600;
+		text-transform: uppercase;
+		color: var(--m-muted-foreground);
+	}
+
+	.back {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		margin-bottom: 7px;
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--m-muted-foreground);
+		font: inherit;
+		font-size: 13px;
+		cursor: pointer;
+	}
+
+	.back:hover {
+		color: var(--m-foreground);
+	}
+
+	.whole {
+		display: flex;
+		width: calc(100% + 21px);
+		height: 52px;
+		align-items: center;
+		gap: 10.5px;
+		margin: 0 -10.5px;
+		padding: 0 10.5px;
+		border: 0;
+		border-radius: var(--m-radius);
+		background: none;
+		color: var(--m-foreground);
+		font: inherit;
+		text-align: left;
+		text-decoration: none;
+		cursor: pointer;
+	}
+
+	.hold {
+		display: flex;
+		flex: none;
+	}
+
+	.segments {
+		display: flex;
+		gap: 2px;
+		padding: 2px;
+		border: 1px solid var(--m-border);
+		border-radius: var(--m-radius);
+	}
+
+	.segments button {
+		height: 24px;
+		padding: 0 9px;
+		border: 0;
+		border-radius: max(calc(var(--m-radius) - 2px), 0px);
+		background: none;
+		color: var(--m-muted-foreground);
+		font: inherit;
+		font-size: 12px;
+		white-space: nowrap;
+		cursor: pointer;
+	}
+
+	.segments button:hover {
+		color: var(--m-foreground);
+	}
+
+	.segments button.on {
+		background: var(--m-secondary-active);
+		color: var(--m-foreground);
+	}
+
+	.text-field {
+		width: 220px;
+		height: 30px;
+		padding: 0 10px;
+		border: 1px solid var(--m-border);
+		border-radius: var(--m-radius);
+		background: var(--m-secondary);
+		color: var(--m-foreground);
+		font: inherit;
+		font-size: 13px;
+		outline: none;
+	}
+
+	.whole:hover {
+		background: var(--m-secondary-hover);
+	}
+
+	.whole .title {
+		flex: 1;
+	}
+
+	.whole :global(svg) {
+		color: var(--m-muted-foreground);
+	}
+
+	.drill {
+		display: flex;
+		width: 32px;
+		height: 32px;
+		align-items: center;
+		justify-content: center;
+		border: 0;
+		border-radius: var(--m-radius);
+		background: none;
+		color: var(--m-muted-foreground);
+		cursor: pointer;
+	}
+
+	.drill:hover {
+		background: var(--m-secondary-hover);
+		color: var(--m-foreground);
+	}
+
+	.rail-wrap {
+		position: relative;
+		margin: 0 -8px;
+	}
+
+	.theme-rail {
+		display: flex;
+		gap: 12px;
+		padding: 8px;
+		overflow-x: auto;
+		scrollbar-width: none;
+		scroll-behavior: smooth;
+	}
+
+	.theme-rail::-webkit-scrollbar {
+		display: none;
+	}
+
+	.theme-card {
+		display: flex;
+		flex: none;
+		flex-direction: column;
+		align-items: center;
+		gap: 5.25px;
+	}
+
+	.theme-card .thumb {
+		position: relative;
+		display: flex;
+		width: 100%;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+		padding: 0;
+		border: 1px solid var(--m-border);
+		border-radius: var(--m-radius);
+		background: none;
+		color: var(--m-muted-foreground);
+		cursor: pointer;
+	}
+
+	.theme-card {
+		position: relative;
+	}
+
+	.trash {
+		position: absolute;
+		top: 6px;
+		right: 6px;
+		z-index: 1;
+		display: flex;
+		width: 26px;
+		height: 26px;
+		align-items: center;
+		justify-content: center;
+		border: 1px solid var(--m-border);
+		border-radius: var(--m-radius);
+		background: var(--m-popover);
+		color: var(--m-muted-foreground);
+		opacity: 0;
+		cursor: pointer;
+		transition: opacity 140ms ease;
+	}
+
+	.theme-card:hover .trash,
+	.trash:focus-visible {
+		opacity: 1;
+	}
+
+	.trash:hover {
+		color: var(--m-foreground);
+	}
+
+	.theme-card .thumb.dashed {
+		border-style: dashed;
+	}
+
+	.theme-card.chosen .thumb {
+		outline: 2px solid var(--m-primary);
+		outline-offset: 2px;
+	}
+
+	.theme-card.locked {
+		opacity: 0.45;
+	}
+
+	.theme-card.locked .thumb,
+	.theme-card.locked .name {
+		cursor: default;
+	}
+
+	.slice {
+		position: absolute;
+		inset: 0;
+		display: flex;
+	}
+
+	.slice :global(svg) {
+		width: 100%;
+		height: 100%;
+	}
+
+	.theme-card .name {
+		display: inline-flex;
+		max-width: 100%;
+		align-items: center;
+		gap: 4px;
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--m-muted-foreground);
+		font: inherit;
+		font-size: 13px;
+		cursor: pointer;
+	}
+
+	.theme-card .name span {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.theme-card.chosen .name {
+		color: var(--m-foreground);
+	}
+
+	.arrow-btn {
+		position: absolute;
+		top: calc(8px + 48px);
+		z-index: 2;
+		display: flex;
+		width: 26px;
+		height: 26px;
+		align-items: center;
+		justify-content: center;
+		border: 1px solid var(--m-border);
+		border-radius: 50%;
+		background: var(--m-popover);
+		color: var(--m-foreground);
+		transform: translateY(-50%);
+		cursor: pointer;
+	}
+
+	.arrow-btn.back {
+		left: 0;
+	}
+
+	.arrow-btn.on {
+		right: 0;
+	}
+
+	.glyphs {
+		display: flex;
+		gap: 9px;
+	}
+
+	.corner {
+		width: 34px;
+		height: 34px;
+		margin: 14px 0 0 14px;
+		border-top: 2px solid var(--m-foreground);
+		border-left: 2px solid var(--m-foreground);
+	}
+
+	.sketch {
+		width: 70%;
+		height: 60%;
+		fill: var(--m-primary);
+		stroke: var(--m-foreground);
+		stroke-width: 1.6;
+		stroke-linecap: round;
+	}
+
+	.sketch path,
+	.sketch line {
+		fill: none;
+	}
+
+	.sketch rect {
+		stroke: none;
+		opacity: 0.85;
+	}
+
+	.bar-sketch {
+		position: absolute;
+		right: 6px;
+		bottom: 6px;
+		left: 6px;
+		display: grid;
+		height: 22px;
+		grid-template-columns: 16px 1fr auto 1fr;
+		align-items: center;
+		gap: 5px;
+		padding: 0 5px;
+		border-radius: 4px;
+		background: var(--m-secondary);
+	}
+
+	.bar-sketch.frosted {
+		background: color-mix(in srgb, var(--m-secondary) 60%, transparent);
+	}
+
+	.bar-sketch .art {
+		width: 14px;
+		height: 14px;
+		border-radius: 2px;
+		background: var(--m-primary);
+	}
+
+	.bar-sketch .lines {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.bar-sketch i {
+		display: block;
+		height: 3px;
+		border-radius: 2px;
+		background: var(--m-muted-foreground);
+	}
+
+	.bar-sketch .lines i:first-child {
+		width: 80%;
+		background: var(--m-foreground);
+	}
+
+	.bar-sketch .lines i:last-child {
+		width: 50%;
+	}
+
+	.bar-sketch .keys {
+		display: flex;
+		gap: 3px;
+	}
+
+	.bar-sketch .keys i {
+		width: 4px;
+		height: 4px;
+		border-radius: 50%;
+		background: var(--m-foreground);
+	}
+
+	.bar-sketch .seek {
+		height: 2px;
+		border-radius: 1px;
+		background: var(--m-muted-foreground);
+	}
+
+	.bar-sketch.compact {
+		height: 14px;
+	}
+
+	.bar-sketch.compact .art {
+		width: 9px;
+		height: 9px;
+	}
+
+	.bar-sketch.compact .lines i:last-child {
+		display: none;
+	}
+
+	.bar-sketch.centered {
+		grid-template-columns: 16px auto 1fr;
+		height: 26px;
+	}
+
+	.bar-sketch.centered .lines {
+		grid-column: 3;
+		grid-row: 1;
+		align-items: center;
+	}
+
+	.bar-sketch.centered .keys {
+		grid-column: 2;
+		grid-row: 1;
+	}
+
+	.bar-sketch.centered .seek {
+		grid-column: 3;
+		grid-row: 1;
+		align-self: end;
+		margin: 0 25% 3px;
+	}
+
+	.levels {
+		display: flex;
+		align-items: flex-end;
+		gap: 3px;
+		height: 18px;
+	}
+
+	.levels i {
+		display: block;
+		width: 5px;
+		border-radius: 1px;
+		background: var(--m-muted-foreground);
+		opacity: 0.35;
+	}
+
+	.levels i:nth-child(1) {
+		height: 33%;
+	}
+
+	.levels i:nth-child(2) {
+		height: 66%;
+	}
+
+	.levels i:nth-child(3) {
+		height: 100%;
+	}
+
+	.levels i.lit {
+		background: var(--m-primary);
+		opacity: 1;
+	}
+
+	.sources {
+		display: flex;
+		flex-direction: column;
+		gap: 3.5px;
+		padding-bottom: 7px;
+	}
+
+	.source {
+		display: flex;
+		align-items: center;
+		gap: 10.5px;
+		padding: 5px 8px;
+		border: 1px solid var(--m-border);
+		border-radius: var(--m-radius);
+		color: var(--m-muted-foreground);
+	}
+
+	.source .name {
+		flex: 1;
+		color: var(--m-foreground);
+	}
+
+	.source.off .name {
+		color: var(--m-muted-foreground);
+	}
+
+	.rank {
+		width: 14px;
+		font-size: 12px;
+		font-variant-numeric: tabular-nums;
 	}
 </style>

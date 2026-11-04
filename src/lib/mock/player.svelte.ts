@@ -31,7 +31,7 @@ let shuffle = $state(false);
 let repeat = $state(0);
 let radio = $state(true);
 let rotation = 0;
-let saved = $state(false);
+let hand = 0;
 const liked = new SvelteSet(['t2']);
 let ticker = 0;
 let anchor = 0;
@@ -162,9 +162,6 @@ export const player = {
 	get reordered() {
 		return queued.length !== source.length || queued.some((id, at) => id !== source[at]);
 	},
-	get saved() {
-		return saved;
-	},
 
 	likes(id: string) {
 		return liked.has(id);
@@ -172,9 +169,6 @@ export const player = {
 	toggleLike(id: string) {
 		if (liked.has(id)) liked.delete(id);
 		else liked.add(id);
-	},
-	toggleSaved() {
-		saved = !saved;
 	},
 
 	resume() {
@@ -267,6 +261,33 @@ export const player = {
 	},
 	clearQueue() {
 		queued = [];
+		hand = 0;
+	},
+	/** Puts songs at the front of the queue, after the ones queued by hand, or at its very end. */
+	enqueue(ids: string[], where: 'next' | 'end' | 'last') {
+		const fresh = ids.filter((id) => id !== current);
+		if (!fresh.length) return;
+		const rest = queued.filter((id) => !fresh.includes(id));
+		if (where === 'last') {
+			queued = [...rest, ...fresh];
+			return;
+		}
+		const at = where === 'next' ? 0 : Math.min(hand, rest.length);
+		queued = [...rest.slice(0, at), ...fresh, ...rest.slice(at)];
+		hand += fresh.length;
+	},
+	/** Starts a list of songs from its first one, the way a page's Play button does. */
+	play(ids: string[], name: string, kind: string) {
+		const [first, ...rest] = shuffle ? scramble(ids) : ids;
+		if (!first) return;
+		remember();
+		current = first;
+		land(0);
+		source = rest;
+		queued = [...rest];
+		hand = 0;
+		from = { name, kind };
+		this.resume();
 	},
 	release() {
 		stop();

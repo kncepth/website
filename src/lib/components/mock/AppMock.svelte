@@ -3,14 +3,24 @@
 	import { shelf } from '$lib/mock/album';
 	import { player } from '$lib/mock/player.svelte';
 	import { reach } from '$lib/mock/packs.svelte';
-	import { palette } from '$lib/mock/theme';
+	import { dim, palette } from '$lib/mock/theme';
 	import { route } from '$lib/mock/route.svelte';
 	import { radius, settings } from '$lib/mock/settings.svelte';
 	import { theme } from '$lib/theme.svelte';
+	import { downloads } from '$lib/mock/downloads.svelte';
+	import { accounts } from '$lib/mock/accounts.svelte';
+	import { menu } from '$lib/mock/menu.svelte';
+	import { together } from '$lib/mock/together.svelte';
 	import Aside from './Aside.svelte';
+	import Members from './Members.svelte';
+	import Menu from './Menu.svelte';
+	import SessionDialogs from './SessionDialogs.svelte';
+	import ThemeDialogs from './ThemeDialogs.svelte';
 	import Fullscreen from './Fullscreen.svelte';
+	import Grip from './Grip.svelte';
 	import Detail from './Detail.svelte';
 	import Artist from './screens/Artist.svelte';
+	import Equalizer from './screens/Equalizer.svelte';
 	import History from './screens/History.svelte';
 	import Home from './screens/Home.svelte';
 	import Library from './screens/Library.svelte';
@@ -21,14 +31,27 @@
 	import Sidebar from './Sidebar.svelte';
 	import TitleBar from './TitleBar.svelte';
 
-	const WIDTH = 1180;
+	const WIDTH = 1170;
 	const HEIGHT = 730;
 	const FLOOR = 0.62;
 	const FADE = 320;
-	const DIM = new Set(['Dark', 'Midnight', 'Forest', 'Ocean', 'Rose', 'Lavender', 'Amber']);
+	/** The sidebars' limits, as the desktop's, and the least the page between them keeps. */
+	const LEFT_MIN = 160;
+	const LEFT_MAX = 400;
+	const RIGHT_MIN = 240;
+	const RIGHT_MAX = 560;
+	/** The least room the page keeps beside a docked left sidebar, the desktop's `SNUG`. */
+	const SNUG = 420;
+	/** The least the page keeps beside the right sidebar, the desktop's `MIN_CONTENT`. */
+	const MIN_CONTENT = 200;
 
+	/** Whether the listener wants the left sidebar open, kept while the window is too cramped. */
 	let left = $state(true);
+	/** What the toggle chose while cramped, until the room changes again. */
+	let forced = $state<boolean | null>(null);
 	let right = $state(true);
+	let leftWidth = $state(195);
+	let rightWidth = $state(254);
 	let room = $state(WIDTH);
 	let tab = $state('lyrics');
 	let full = $state(false);
@@ -41,7 +64,7 @@
 	const tint = $derived(shelf.get(player.track.album)?.tint ?? shelf.get('nocturnes')?.tint);
 	const tokens = $derived(palette(tint, settings.adaptive, settings.theme));
 	const scheme = $derived(
-		settings.theme === 'System' ? undefined : DIM.has(settings.theme) ? 'dark' : 'light'
+		settings.theme === 'System' ? undefined : dim(settings.theme) ? 'dark' : 'light'
 	);
 	const style = $derived(
 		Object.entries(tokens)
@@ -50,7 +73,27 @@
 	);
 
 	const still = $derived(settings.motion === 'Never');
-	const content = $derived(WIDTH - (left ? 196 : 0) - (right ? 255 : 0));
+	// the desktop's `adapt`: with too little room beside both sidebars the left one steps
+	// aside, and its toggle then lays it over the page instead of beside it
+	const cramped = $derived(WIDTH - leftWidth - (right ? rightWidth : 0) < SNUG);
+	const shown = $derived(forced ?? (left && !cramped));
+	const overlays = $derived(cramped && shown);
+	const docked = $derived(shown && !overlays);
+	const content = $derived(WIDTH - (docked ? leftWidth + 1 : 0) - (right ? rightWidth + 1 : 0));
+	const leftMax = $derived(
+		Math.max(LEFT_MIN, Math.min(LEFT_MAX, WIDTH - (right ? rightWidth : 0) - SNUG))
+	);
+	const rightMax = $derived(Math.max(RIGHT_MIN, Math.min(RIGHT_MAX, WIDTH - MIN_CONTENT)));
+
+	$effect(() => {
+		void cramped;
+		forced = null;
+	});
+
+	function toggleLeft() {
+		if (cramped) forced = !shown;
+		else left = !left;
+	}
 
 	let fading = $state(false);
 	let settle = 0;
@@ -72,26 +115,62 @@
 		return () => clearTimeout(settle);
 	});
 
-	onDestroy(() => player.release());
+	let app = $state<HTMLElement | null>(null);
+
+	$effect(() => {
+		menu.bind(app);
+		return () => menu.bind(null);
+	});
+
+	$effect(() => {
+		if (tab === 'members') right = true;
+	});
+
+	// leaving Spotify ends what Spotify Connect was doing, and signing out of every service
+	// ends a Sonora Session too, as the desktop's Sessions button stops offering either
+	$effect(() => {
+		const service = accounts.active;
+		if (service !== 'spotify') {
+			together.transfer(null);
+			if (together.kind === 'jam') together.leave();
+		}
+		if (!service && together.kind) together.leave();
+	});
+
+	$effect(() => {
+		void at;
+		void full;
+		menu.close();
+	});
+
+	onDestroy(() => {
+		player.release();
+		together.release();
+		downloads.release();
+		menu.close();
+	});
 </script>
 
 <div class="stage" bind:clientWidth={room} style:height="{HEIGHT * scale}px">
 	<div class="sizer" style:width="{WIDTH * scale}px" style:height="{HEIGHT * scale}px">
 		<div
 			class="app"
+			bind:this={app}
 			class:fading={fading && !still}
 			class:still
 			{style}
 			style:color-scheme={scheme}
 			style:--m-radius="{radius()}px"
+			style:--m-left="{leftWidth}px"
+			style:--m-right="{rightWidth}px"
 			style:transform="scale({scale})"
 		>
 			{#if full}
 				<Fullscreen bind:panel={stage} onleave={() => (full = false)} />
 			{:else}
-				<TitleBar bind:left bind:right />
+				<TitleBar left={shown} {docked} ontoggle={toggleLeft} bind:right />
 				<div class="body">
-					{#if left}
+					{#if docked}
 						<Sidebar />
 					{/if}
 					{#if at.screen === 'home'}
@@ -105,7 +184,13 @@
 					{:else if at.screen === 'history'}
 						<History />
 					{:else if at.screen === 'settings'}
-						<Settings tab={at.tab ?? 'General'} />
+						<Settings
+							tab={at.tab ?? 'General'}
+							room={content}
+							onequalizer={() => route.go({ screen: 'equalizer' })}
+						/>
+					{:else if at.screen === 'equalizer'}
+						<Equalizer />
 					{:else if at.screen === 'artist'}
 						<Artist id={at.id ?? 'chopin'} />
 					{:else if at.screen === 'playlist'}
@@ -113,12 +198,44 @@
 					{:else}
 						<Detail id={at.id ?? 'airs'} />
 					{/if}
-					{#if right}
+					{#if right && tab === 'members'}
+						<Members />
+					{:else if right}
 						<Aside {tab} />
+					{/if}
+					{#if overlays}
+						<button
+							type="button"
+							class="dismiss"
+							aria-label="Close the sidebar"
+							onclick={() => (forced = false)}
+						></button>
+						<div class="overlay"><Sidebar /></div>
+					{/if}
+					{#if docked}
+						<Grip
+							side="left"
+							bind:width={leftWidth}
+							min={LEFT_MIN}
+							max={leftMax}
+							label="Resize the sidebar"
+						/>
+					{/if}
+					{#if right}
+						<Grip
+							side="right"
+							bind:width={rightWidth}
+							min={RIGHT_MIN}
+							max={rightMax}
+							label="Resize the side panel"
+						/>
 					{/if}
 				</div>
 				<PlayerBar bind:tab onfullscreen={() => (full = true)} />
 			{/if}
+			<SessionDialogs />
+			<ThemeDialogs />
+			<Menu width={WIDTH} height={HEIGHT} />
 		</div>
 	</div>
 </div>
@@ -137,8 +254,9 @@
 	}
 
 	.app {
+		position: relative;
 		display: flex;
-		width: 1180px;
+		width: 1170px;
 		height: 730px;
 		flex-direction: column;
 		transform-origin: top left;
@@ -152,9 +270,45 @@
 	}
 
 	.body {
+		position: relative;
 		display: flex;
 		flex: 1;
 		min-height: 0;
+	}
+
+	.dismiss {
+		position: absolute;
+		inset: 0;
+		z-index: 5;
+		padding: 0;
+		border: 0;
+		background: color-mix(in srgb, var(--m-background) 35%, transparent);
+		cursor: default;
+		animation: fade 200ms ease;
+	}
+
+	.overlay {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 0;
+		z-index: 6;
+		display: flex;
+		box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
+		animation: slide 250ms cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	@keyframes fade {
+		from {
+			opacity: 0;
+		}
+	}
+
+	@keyframes slide {
+		from {
+			transform: translateX(-12px);
+			opacity: 0;
+		}
 	}
 
 	.fading,

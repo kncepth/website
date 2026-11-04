@@ -1,10 +1,14 @@
 <script lang="ts">
+	import { menu } from '$lib/mock/menu.svelte';
+	import { albumMenu, artistMenu } from '$lib/mock/menus';
 	import { album as first, albums, columns, records, runtime, shelf } from '$lib/mock/album';
 	import { player } from '$lib/mock/player.svelte';
 	import { route } from '$lib/mock/route.svelte';
 	import { artists } from '$lib/mock/screens';
 	import Card from './Card.svelte';
+	import { library } from '$lib/mock/library.svelte';
 	import Control from './Control.svelte';
+	import HeroDownload from './HeroDownload.svelte';
 	import PageHero from './PageHero.svelte';
 	import Table from './Table.svelte';
 
@@ -38,11 +42,17 @@
 				<Control
 					variant="filled"
 					icon={holding ? 'pause' : 'play'}
-					label={holding ? 'Pause' : mine ? 'Resume' : 'Play album'}
+					label={holding ? 'Pause' : 'Play'}
+					wide
 					onclick={() => {
 						if (holding) player.pause();
 						else if (mine) player.resume();
-						else player.select(rows[0].id);
+						else
+							player.play(
+								rows.map((track) => track.id),
+								album.title,
+								'Album'
+							);
 					}}
 				/>
 				<Control
@@ -53,17 +63,34 @@
 				/>
 				<Control
 					variant="outline"
-					icon={player.saved ? 'heart-filled' : 'heart'}
-					title={player.saved ? 'Remove from library' : 'Add to library'}
-					tint={player.saved ? 'primary' : ''}
-					onclick={() => player.toggleSaved()}
+					icon={library.saved(album.id) ? 'heart-filled' : 'heart'}
+					title={library.saved(album.id) ? 'Remove from Favorites' : 'Add to Favorites'}
+					tint={library.saved(album.id) ? 'primary' : ''}
+					onclick={() => library.toggle(album.id)}
 				/>
-				<Control icon="ellipsis" title="More" />
+				<HeroDownload
+					job={{
+						key: `album-${album.id}`,
+						subject: 'Album',
+						name: album.title,
+						cover: album.cover
+					}}
+					ids={rows.map((track) => track.id)}
+				/>
+				<Control
+					icon="ellipsis"
+					title="More"
+					selected={menu.owner === `hero-${album.id}`}
+					onclick={(event: MouseEvent) =>
+						menu.from(event.currentTarget as Element, `hero-${album.id}`, () =>
+							albumMenu(album.id)
+						)}
+				/>
 			{/snippet}
 		</PageHero>
 	</div>
 
-	<Table {columns} {rows} />
+	<Table {columns} {rows} album={album.id} />
 
 	{#if notices.length}
 		<div class="notices">
@@ -124,6 +151,8 @@
 							meta={`${entry.released} · ${entry.artist}`}
 							cover={entry.cover}
 							onpress={() => route.go({ screen: 'album', id: entry.id })}
+							oncontext={(event: MouseEvent) =>
+								menu.at(event, `album-${entry.id}`, () => albumMenu(entry.id))}
 						/>
 					{/each}
 				{:else}
@@ -138,6 +167,8 @@
 							fallback="user-round"
 							cover={artist.image}
 							onpress={() => route.go({ screen: 'artist', id: artist.id })}
+							oncontext={(event: MouseEvent) =>
+								menu.at(event, `artist-${artist.id}`, () => artistMenu(artist.id))}
 						/>
 					{/each}
 				{/if}

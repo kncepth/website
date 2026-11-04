@@ -8,7 +8,7 @@ export const albums = [
 		cover: '/cover-airs.webp',
 		release: 'Album',
 		label: 'Field Recordings',
-		tint: { hue: 171.89, saturation: 0.371 }
+		tint: { hue: 171.89, saturation: 0.371, second: { hue: 32, saturation: 0.45 } }
 	},
 	{
 		id: 'nocturnes',
@@ -17,7 +17,7 @@ export const albums = [
 		released: '1846',
 		cover: '/cover-nocturnes.webp',
 		release: 'Album',
-		tint: { hue: 218.72, saturation: 0.368 }
+		tint: { hue: 218.72, saturation: 0.368, second: { hue: 48, saturation: 0.75 } }
 	},
 	{
 		id: 'bergamasque',
@@ -26,7 +26,7 @@ export const albums = [
 		released: '1905',
 		cover: '/cover-bergamasque.webp',
 		release: 'Album',
-		tint: { hue: 202.07, saturation: 0.299 }
+		tint: { hue: 202.07, saturation: 0.299, second: { hue: 120, saturation: 0.35 } }
 	},
 	{
 		id: 'gymnopedies',
@@ -35,7 +35,7 @@ export const albums = [
 		released: '1888',
 		cover: '/cover-gymnopedies.webp',
 		release: 'Album',
-		tint: { hue: 94.64, saturation: 0.307 }
+		tint: { hue: 94.64, saturation: 0.307, second: { hue: 330, saturation: 0.4 } }
 	},
 	{
 		id: 'seasons',
@@ -44,7 +44,7 @@ export const albums = [
 		released: '1725',
 		cover: '/cover-seasons.webp',
 		release: 'Album',
-		tint: { hue: 48.64, saturation: 0.722 }
+		tint: { hue: 48.64, saturation: 0.722, second: { hue: 160, saturation: 0.45 } }
 	},
 	{
 		id: 'peer-gynt',
@@ -53,7 +53,7 @@ export const albums = [
 		released: '1875',
 		cover: '/cover-peer-gynt.webp',
 		release: 'Album',
-		tint: { hue: 22.62, saturation: 0.368 }
+		tint: { hue: 22.62, saturation: 0.368, second: { hue: 215, saturation: 0.5 } }
 	},
 	{
 		id: 'pictures',
@@ -62,7 +62,7 @@ export const albums = [
 		released: '1874',
 		cover: '/cover-pictures.webp',
 		release: 'Album',
-		tint: { hue: 9.28, saturation: 0.622 }
+		tint: { hue: 9.28, saturation: 0.622, second: { hue: 205, saturation: 0.55 } }
 	}
 ];
 
