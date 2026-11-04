@@ -3,7 +3,7 @@
 	import { shelf } from '$lib/mock/album';
 	import { player } from '$lib/mock/player.svelte';
 	import { reach } from '$lib/mock/packs.svelte';
-	import { palette } from '$lib/mock/theme';
+	import { dim, palette } from '$lib/mock/theme';
 	import { route } from '$lib/mock/route.svelte';
 	import { radius, settings } from '$lib/mock/settings.svelte';
 	import { theme } from '$lib/theme.svelte';
@@ -31,7 +31,6 @@
 	const HEIGHT = 730;
 	const FLOOR = 0.62;
 	const FADE = 320;
-	const DIM = new Set(['Dark', 'Midnight', 'Forest', 'Ocean', 'Rose', 'Lavender', 'Amber']);
 
 	let left = $state(true);
 	let right = $state(true);
@@ -47,7 +46,7 @@
 	const tint = $derived(shelf.get(player.track.album)?.tint ?? shelf.get('nocturnes')?.tint);
 	const tokens = $derived(palette(tint, settings.adaptive, settings.theme));
 	const scheme = $derived(
-		settings.theme === 'System' ? undefined : DIM.has(settings.theme) ? 'dark' : 'light'
+		settings.theme === 'System' ? undefined : dim(settings.theme) ? 'dark' : 'light'
 	);
 	const style = $derived(
 		Object.entries(tokens)

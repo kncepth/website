@@ -65,30 +65,82 @@ const palettes: Record<string, string> = {
 	dark: '0a0a0a fafafa 50505066 262626 0000008c fafafa 909090 171717 36363666 4d4d4d66 fafafa 171717 e5e5e5b3 7f1d1d fef2f2 8b2020b3 141414 fafafa f5f5f5 1d4ed8 0a0a0a 50505066 262626 262626 171717cc 8a8a8a 262626b3 3b3b3b66 1e40af33 1d4ed8',
 	light:
 		'fafafa 171717 9b9b9b66 e5e5e5 0000008c fafafa 606060 f5f5f5 d5d5d566 b7b7b766 171717 fafafa 262626b3 b91c1c fef2f2 991b1bb3 ffffff 171717 262626 2563eb f5f5f5 cdcdcd66 d4d4d4 d4d4d4 f5f5f5e6 666666 d4d4d4b3 e8e8e866 2563eb1f 2563eb',
-	midnight:
-		'07111f e6edf7 40689266 15283d 0000008c fafafa 8296ad 102238 23477066 2f5b8c66 38bdf8 07111f 7dd3fcb3 991b1b fff1f2 b91c1cb3 0b1a2c e6edf7 38bdf8 0284c7 091827 2c548666 1e344d 1e344d 102238e6 8296ad 1e344db3 1c3f6266 0284c733 38bdf8',
-	forest:
-		'0b1410 ecf7ef 4e7a6066 203328 0000008c fafafa 86a58f 16261d 304a3a66 41664f66 86efac 0b1410 bbf7d0b3 991b1b fff1f2 b91c1cb3 101d16 ecf7ef 4ade80 16a34a 0d1812 3c5c4966 263d30 263d30 16261de6 86a58f 263d30b3 27423166 16a34a33 4ade80',
-	ocean:
-		'06171a e6edf7 3f808666 17373b 0000008c fafafa 7fa9ad 0f292d 244f5466 346b7266 5eead4 06171a 99f6e4b3 991b1b fff1f2 b91c1cb3 0a2024 e6edf7 2dd4bf 0d9488 081c1f 2d606566 1d4145 1d4145 0f292de6 5a787b 1d4145b3 1b454b66 0d948833 2dd4bf',
-	rose: '180b10 fafafa 984e6766 3b2029 0000008c fafafa b58a98 2b161e 55303c66 713a4d66 fda4af 180b10 fecdd3b3 7f1d1d fef2f2 8b2020b3 211018 fafafa fb7185 e11d48 1c0d13 6a3c4a66 4b2633 4b2633 2b161ee6 80626c 4b2633b3 49273366 e11d4833 fb7185',
-	lavender:
-		'120e1c fafafa 7e66b266 302745 0000008c fafafa a99bc2 241c35 473a6466 5d4b8566 c4b5fd 120e1c ddd6feb3 7f1d1d fef2f2 8b2020b3 191326 fafafa a78bfa 7c3aed 161020 57497c66 3d3158 3d3158 241c35e6 786e8a 3d3158b3 3c2f5666 7c3aed33 a78bfa',
-	amber:
-		'171108 fafafa 94703c66 382b18 0000008c fafafa ad9878 291f11 513f2466 6f542d66 fcd34d 171108 fde68ab3 7f1d1d fef2f2 8b2020b3 20170c fafafa f59e0b d97706 1b1409 634e2e66 49371d 49371d 291f11e6 7b6c55 49371db3 45341d66 d9770633 f59e0b'
+	'catppuccin-latte':
+		'eff1f5 4c4f69 acb0be66 ccd0da 0000008c eff1f5 6c6f85 e6e9ef ccd0da66 bcc0cc66 8839ef eff1f5 7430cbb3 d20f39 eff1f5 b20d30b3 eff1f5 4c4f69 8839ef 8839ef eff1f5 bcc0cc66 ccd0da ccd0da e6e9efe6 6c6f85 ccd0dab3 ccd0da66 8839ef33 8839ef',
+	'catppuccin-frappe':
+		'303446 c6d0f5 62688066 51576d 0000008c c6d0f5 a5adce 414559 51576d66 62688066 ca9ee6 232634 d7b6ecb3 e78284 232634 eda1a3b3 292c3c c6d0f5 ca9ee6 ca9ee6 303446 62688066 414559 414559 292c3ce6 949cbb 414559b3 51576d66 ca9ee633 ca9ee6',
+	'catppuccin-macchiato':
+		'24273a cad3f5 5b607866 494d64 0000008c cad3f5 a5adcb 363a4f 494d6466 5b607866 c6a0f6 181926 d4b8f8b3 ed8796 181926 f2a5b0b3 1e2030 cad3f5 c6a0f6 c6a0f6 24273a 5b607866 363a4f 363a4f 1e2030e6 939ab7 363a4fb3 494d6466 c6a0f633 c6a0f6',
+	'catppuccin-mocha':
+		'1e1e2e cdd6f4 585b7066 45475a 0000008c cdd6f4 a6adc8 313244 45475a66 585b7066 cba6f7 11111b d8bcf9b3 f38ba8 11111b f6a8beb3 181825 cdd6f4 cba6f7 cba6f7 1e1e2e 585b7066 313244 313244 181825e6 9399b2 313244b3 45475a66 cba6f733 cba6f7',
+	dracula:
+		'282a36 f8f8f2 6272a466 44475a 0000008c f8f8f2 b4bccf 343746 44475a66 6272a466 bd93f9 282a36 ceaefab3 ff5555 282a36 ff8080b3 21222c f8f8f2 bd93f9 bd93f9 282a36 6272a466 343746 343746 21222ce6 b4bccf 343746b3 44475a66 bd93f933 bd93f9',
+	'gruvbox-dark':
+		'282828 ebdbb2 665c5466 3c3836 0000008c ebdbb2 a89984 32302f 50494566 665c5466 fe8019 282828 fea052b3 fb4934 282828 fc7667b3 32302f ebdbb2 fe8019 fe8019 282828 665c5466 3c3836 3c3836 282828e6 928374 3c3836b3 50494566 fe801933 fe8019',
+	'gruvbox-dark-hard':
+		'1d2021 ebdbb2 665c5466 3c3836 0000008c ebdbb2 a89984 282828 50494566 665c5466 fe8019 1d2021 fea052b3 fb4934 1d2021 fc7667b3 282828 ebdbb2 fe8019 fe8019 1d2021 665c5466 3c3836 3c3836 1d2021e6 928374 3c3836b3 50494566 fe801933 fe8019',
+	'gruvbox-light':
+		'fbf1c7 3c3836 a8998466 ebdbb2 0000008c ebdbb2 7c6f64 f2e5bc d5c4a166 bdae9366 af3a03 fbf1c7 953103b3 9d0006 fbf1c7 850005b3 fbf1c7 3c3836 af3a03 af3a03 fbf1c7 bdae9366 d5c4a1 d5c4a1 f2e5bce6 7c6f64 d5c4a1b3 d5c4a166 af3a0333 af3a03',
+	'gruvbox-light-hard':
+		'f9f5d7 3c3836 a8998466 ebdbb2 0000008c ebdbb2 7c6f64 f2e5bc d5c4a166 bdae9366 af3a03 f9f5d7 953103b3 9d0006 f9f5d7 850005b3 f9f5d7 3c3836 af3a03 af3a03 f9f5d7 bdae9366 d5c4a1 d5c4a1 f2e5bce6 7c6f64 d5c4a1b3 d5c4a166 af3a0333 af3a03',
+	nord: '2e3440 d8dee9 4c566a66 434c5e 0000008c eceff4 a0a8b6 3b4252 4c566a66 616a7d66 88c0d0 2e3440 a6d0dcb3 bf616a eceff4 cf888fb3 3b4252 d8dee9 88c0d0 88c0d0 2e3440 4c566a66 3b4252 3b4252 2e3440e6 a0a8b6 3b4252b3 4c566a66 88c0d033 88c0d0',
+	'rose-pine-main':
+		'191724 e0def4 524f6766 403d52 0000008c e0def4 908caa 1f1d2e 403d5266 524f6766 c4a7e7 191724 d3bdedb3 eb6f92 191724 f093adb3 26233a e0def4 c4a7e7 c4a7e7 191724 524f6766 403d52 403d52 1f1d2ee6 908caa 403d52b3 403d5266 c4a7e733 c4a7e7',
+	'rose-pine-moon':
+		'232136 e0def4 56526e66 44415a 0000008c e0def4 908caa 2a273f 44415a66 56526e66 c4a7e7 232136 d3bdedb3 eb6f92 232136 f093adb3 393552 e0def4 c4a7e7 c4a7e7 232136 56526e66 44415a 44415a 2a273fe6 908caa 44415ab3 44415a66 c4a7e733 c4a7e7',
+	'rose-pine-dawn':
+		'faf4ed 575279 cecacd66 dfdad9 0000008c faf4ed 797593 fffaf3 dfdad966 cecacd66 907aa9 fffaf3 7a6890b3 b4637a fffaf3 995468b3 f2e9e1 575279 907aa9 907aa9 faf4ed cecacd66 dfdad9 dfdad9 fffaf3e6 797593 dfdad9b3 dfdad966 907aa933 907aa9',
+	'solarized-dark':
+		'002b36 93a1a1 586e7566 1f4751 0000008c eee8d5 839496 073642 586e7566 657b8366 268bd2 002b36 5ca8ddb3 dc322f fdf6e3 e56563b3 073642 93a1a1 268bd2 268bd2 002b36 586e7566 073642 073642 002b36e6 839496 073642b3 586e7566 268bd233 268bd2',
+	'solarized-light':
+		'fdf6e3 586e75 93a1a166 d3d3c5 0000008c fdf6e3 657b83 eee8d5 93a1a166 83949666 268bd2 fdf6e3 2076b2b3 dc322f fdf6e3 bb2a28b3 fdf6e3 586e75 268bd2 268bd2 fdf6e3 93a1a166 eee8d5 eee8d5 eee8d5e6 657b83 eee8d5b3 93a1a166 268bd233 268bd2'
 };
 
 const kinds: Record<string, string> = {
 	System: 'system',
 	Dark: 'dark',
 	Light: 'light',
-	Midnight: 'midnight',
-	Forest: 'forest',
-	Ocean: 'ocean',
-	Rose: 'rose',
-	Lavender: 'lavender',
-	Amber: 'amber'
+	'Catppuccin Latte': 'catppuccin-latte',
+	'Catppuccin Frappé': 'catppuccin-frappe',
+	'Catppuccin Macchiato': 'catppuccin-macchiato',
+	'Catppuccin Mocha': 'catppuccin-mocha',
+	Dracula: 'dracula',
+	'Gruvbox Dark': 'gruvbox-dark',
+	'Gruvbox Dark Hard': 'gruvbox-dark-hard',
+	'Gruvbox Light': 'gruvbox-light',
+	'Gruvbox Light Hard': 'gruvbox-light-hard',
+	Nord: 'nord',
+	'Rosé Pine Main': 'rose-pine-main',
+	'Rosé Pine Moon': 'rose-pine-moon',
+	'Rosé Pine Dawn': 'rose-pine-dawn',
+	'Solarized Dark': 'solarized-dark',
+	'Solarized Light': 'solarized-light'
 };
+
+/** The theme cards in Settings: the built-in palettes, then each theme file family with its variants. */
+export const families: { id: string; label: string; variants: string[] }[] = [
+	{ id: 'system', label: 'System', variants: ['System'] },
+	{ id: 'dark', label: 'Dark', variants: ['Dark'] },
+	{ id: 'light', label: 'Light', variants: ['Light'] },
+	{
+		id: 'catppuccin',
+		label: 'Catppuccin',
+		variants: ['Catppuccin Latte', 'Catppuccin Frappé', 'Catppuccin Macchiato', 'Catppuccin Mocha']
+	},
+	{ id: 'dracula', label: 'Dracula', variants: ['Dracula'] },
+	{
+		id: 'gruvbox',
+		label: 'Gruvbox',
+		variants: ['Gruvbox Dark', 'Gruvbox Dark Hard', 'Gruvbox Light', 'Gruvbox Light Hard']
+	},
+	{ id: 'nord', label: 'Nord', variants: ['Nord'] },
+	{
+		id: 'rose-pine',
+		label: 'Rosé Pine',
+		variants: ['Rosé Pine Main', 'Rosé Pine Moon', 'Rosé Pine Dawn']
+	},
+	{ id: 'solarized', label: 'Solarized', variants: ['Solarized Dark', 'Solarized Light'] }
+];
 
 export const themes = Object.keys(kinds);
 
@@ -191,8 +243,9 @@ export function palette(
 	adaptive = true,
 	theme = 'Dark'
 ): Record<string, string> {
-	const washing = adaptive ? tint : undefined;
 	const kind = kinds[theme] ?? 'dark';
+	const washing =
+		adaptive && (kind === 'dark' || kind === 'light' || kind === 'system') ? tint : undefined;
 	if (kind !== 'system') return shades(palettes[kind], washing);
 
 	const light = shades(palettes.light, washing);
@@ -202,4 +255,18 @@ export function palette(
 		tokens[name] = `light-dark(${light[name]}, ${dark[name]})`;
 	}
 	return tokens;
+}
+
+/** Whether a theme draws light text on a dark page, which the mock's colour scheme follows. */
+export function dim(theme: string): boolean {
+	const kind = kinds[theme] ?? 'dark';
+	if (kind === 'system') return false;
+	return shade(palettes[kind].split(' ')[0])[2] < 50;
+}
+
+/** A theme's own colours by token name, for its miniature on a theme card. */
+export function colorsOf(theme: string): Record<string, string> {
+	const kind = kinds[theme] ?? 'dark';
+	const source = palettes[kind === 'system' ? 'dark' : kind];
+	return Object.fromEntries(source.split(' ').map((color, at) => [FIELDS[at], `#${color}`]));
 }
