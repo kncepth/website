@@ -8,6 +8,7 @@
 		onpick,
 		thumb,
 		height = 72,
+		columns = 4,
 		variants = () => false,
 		onvariants = undefined
 	}: {
@@ -16,13 +17,15 @@
 		onpick: (option: T) => void;
 		thumb: Snippet<[T]>;
 		height?: number;
+		/** How many cards stand across the row, as the desktop's settings grid. */
+		columns?: number;
 		/** Whether an option comes in variants, which its name opens behind a chevron. */
 		variants?: (option: T) => boolean;
 		onvariants?: (option: T, trigger: Element) => void;
 	} = $props();
 </script>
 
-<div class="cards" role="radiogroup">
+<div class="cards" role="radiogroup" style:--columns={columns}>
 	{#each options as option (option.id)}
 		<div class="card" class:chosen={chosen(option)}>
 			<button
@@ -55,7 +58,7 @@
 <style>
 	.cards {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+		grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
 		gap: 14px 10.5px;
 		padding: 3.5px 0 10.5px;
 	}

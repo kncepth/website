@@ -411,7 +411,7 @@ const appearance: Section = {
 					key: 'fontSize',
 					title: 'Font size',
 					detail: 'Base text size, everything else scales with it',
-					control: 'slider'
+					control: 'stepper'
 				}
 			]
 		},

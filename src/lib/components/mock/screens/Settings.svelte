@@ -22,7 +22,7 @@
 	import { menu } from '$lib/mock/menu.svelte';
 	import { reach } from '$lib/mock/packs.svelte';
 	import { settings } from '$lib/mock/settings.svelte';
-	import { colorsOf, families } from '$lib/mock/theme';
+	import { colorsOf, dim, families } from '$lib/mock/theme';
 	import Logo from '../../Logo.svelte';
 	import ThemeMiniature from '../../ThemeMiniature.svelte';
 	import Control from '../Control.svelte';
@@ -44,7 +44,17 @@
 	const COLUMN = 640;
 	const ROOMY = 620;
 	const MARGIN = 24;
-	const named = $derived(Math.min(room - MARGIN * 2, COLUMN) >= ROOMY);
+	const width = $derived(Math.min(room - MARGIN * 2, COLUMN));
+	const named = $derived(width >= ROOMY);
+	/** The card grid's columns as the desktop's `grid`: fewer as the column narrows. */
+	const columns = $derived(width < 420 ? 2 : width < ROOMY ? 3 : 4);
+
+	/** Calls `measure` whenever the element resizes. */
+	function watch(node: HTMLElement, measure: () => void) {
+		const observer = new ResizeObserver(() => measure());
+		observer.observe(node);
+		return { destroy: () => observer.disconnect() };
+	}
 
 	function press(glyph: string) {
 		if (accounts.waiting) return;
@@ -63,8 +73,15 @@
 	let top = $state(125);
 	let drill = $state<string | null>(null);
 
-	const PACKS = ['Lucide', 'Remix', 'Solar', 'Iconoir'];
-	const SAMPLE = ['house', 'search', 'heart', 'play'];
+	const PACKS = ['Lucide', 'Iconoir', 'Remix', 'Solar'];
+	const SAMPLE = ['house', 'heart-filled', 'play-filled', 'shuffle', 'search'];
+	/** The few rows the desktop still explains under their label. Every other row's
+	 *  explanation only feeds the settings search. */
+	const EXPLAINED = new Set(['saver', 'playerBarTransparent', 'matchRate']);
+	/** The theme rail's cards, as the desktop's `CARD`, `THUMB` and `SLICES`. */
+	const CARD = 150;
+	const THUMB = 96;
+	const SLICES = 4;
 	const RATES = [44.1, 48, 88.2, 96, 176.4, 192];
 	const BUFFERS = [128, 256, 512, 1024, 2048, 4096];
 
@@ -151,29 +168,52 @@
 	}
 
 	function step(key: string, by: number) {
+		if (key === 'fontSize') {
+			settings.fontSize = Math.min(Math.max(Number(settings.fontSize) + by, 10), 24);
+			return;
+		}
 		const steps = key === 'sampleRate' ? RATES : BUFFERS;
 		const at = steps.indexOf(Number(store[key]));
 		store[key] = steps[Math.min(Math.max(at + by, 0), steps.length - 1)];
 	}
 
 	const stepped = (key: string) =>
-		key === 'sampleRate' ? `${settings.sampleRate} kHz` : `${settings.buffer} frames`;
+		key === 'fontSize'
+			? `${settings.fontSize} px`
+			: key === 'sampleRate'
+				? `${settings.sampleRate} kHz`
+				: `${settings.buffer} frames`;
 
-	/** The variant of a theme family on show: the chosen one, or its first. */
+	/** The variant each family's card names, once one of its variants was chosen. */
+	let remembered = $state<Record<string, string>>({});
+
+	$effect(() => {
+		const family = families.find((one) => one.variants.includes(String(settings.theme)));
+		if (family && family.variants.length > 1)
+			remembered = { ...remembered, [family.id]: String(settings.theme) };
+	});
+
+	/** The variant a family's card shows: the chosen one, the one last chosen in it, else the
+	 *  first dark one, as the desktop picks for a dark system appearance. */
 	const variantOf = (family: (typeof families)[number]) =>
-		family.variants.includes(String(settings.theme)) ? String(settings.theme) : family.variants[0];
+		family.variants.includes(String(settings.theme))
+			? String(settings.theme)
+			: (remembered[family.id] ?? family.variants.find((name) => dim(name)) ?? family.variants[0]);
 
-	const themeCards = $derived(
-		families.map((family) => ({ id: family.id, label: family.label, family }))
-	);
+	const builtIn = (id: string) => id === 'system' || id === 'dark' || id === 'light';
 
-	function variants(option: (typeof themeCards)[number], trigger: Element) {
+	/** The palettes a card slices its miniature into: System's dark and light, a family's first
+	 *  four variants, or a built-in theme's own. */
+	const slicesOf = (family: (typeof families)[number]) =>
+		family.id === 'system' ? ['Dark', 'Light'] : family.variants.slice(0, SLICES);
+
+	function variants(family: (typeof families)[number], trigger: Element) {
 		menu.from(
 			trigger,
-			`variants-${option.id}`,
+			`variants-${family.id}`,
 			() => ({
-				width: 200,
-				items: option.family.variants.map((name) => ({
+				width: 220,
+				items: family.variants.map((name) => ({
 					id: name,
 					label: name,
 					selected: settings.theme === name,
@@ -182,6 +222,21 @@
 			}),
 			{ align: 'start' }
 		);
+	}
+
+	let rail = $state<HTMLElement | null>(null);
+	let edges = $state({ back: false, on: false });
+
+	function measureRail() {
+		if (!rail) return;
+		edges = {
+			back: rail.scrollLeft > 1,
+			on: rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 1
+		};
+	}
+
+	function slide(by: number) {
+		rail?.scrollBy({ left: by * (CARD + 12) * 2, behavior: 'smooth' });
 	}
 
 	function move(source: string, by: number) {
@@ -201,92 +256,167 @@
 </script>
 
 {#snippet row(entry: Row)}
-	<div class="row">
-		<div class="text">
+	{#if entry.control === 'drill' || entry.href}
+		{@const outward = !!entry.href && !entry.href.startsWith('/')}
+		<!-- a row that opens a page or a link is one whole button, its icon at the end -->
+		<svelte:element
+			this={entry.href ? 'a' : 'button'}
+			class="whole"
+			href={entry.href}
+			target={outward ? '_blank' : undefined}
+			rel={outward ? 'noreferrer' : undefined}
+			type={entry.href ? undefined : 'button'}
+			role={entry.href ? undefined : 'button'}
+			tabindex="0"
+			onclick={() => !entry.href && open(entry)}
+		>
 			<span class="title">{entry.title}</span>
-			{#if entry.detail}<span class="detail">{entry.detail}</span>{/if}
-		</div>
-		<div class="control">
-			{#if entry.control === 'switch'}
-				<Switch
-					checked={Boolean(store[entry.key])}
-					label={entry.title}
-					onchange={(value) => (store[entry.key] = value)}
-				/>
-			{:else if entry.control === 'picker'}
-				<Picker
-					value={String(store[entry.key] ?? options(entry)[0] ?? '')}
-					options={options(entry)}
-					onpick={(value) => (store[entry.key] = value)}
-				/>
-			{:else if entry.control === 'slider'}
-				<div class="slider">
-					<Scrubber
-						fraction={fraction(entry.key)}
+			{#if entry.value}<span class="reading">{entry.value}</span>{/if}
+			<Icon name={entry.href ? 'external-link' : 'chevron-right'} size={14} />
+		</svelte:element>
+	{:else}
+		<div class="row">
+			<div class="text">
+				<span class="title">{entry.title}</span>
+				{#if entry.detail && (EXPLAINED.has(entry.key) || searching)}<span class="detail"
+						>{entry.detail}</span
+					>{/if}
+			</div>
+			<div class="control">
+				{#if entry.control === 'switch'}
+					<Switch
+						checked={Boolean(store[entry.key])}
 						label={entry.title}
-						onseek={(to: number) => seek(entry.key, to)}
+						onchange={(value) => (store[entry.key] = value)}
 					/>
-					<span class="reading">{reading(entry.key)}</span>
-				</div>
-			{:else if entry.control === 'stepper'}
-				<span class="reading">{stepped(entry.key)}</span>
-				<Control icon="minus" title="Lower" small onclick={() => step(entry.key, -1)} />
-				<Control icon="plus" title="Raise" small onclick={() => step(entry.key, 1)} />
-			{:else if entry.control === 'drill'}
-				<button type="button" class="drill" aria-label={entry.title} onclick={() => open(entry)}>
-					<Icon name="chevron-right" size={14} />
-				</button>
-			{:else if entry.control === 'button'}
-				{#if entry.value}<span class="reading">{entry.value}</span>{/if}
-				{#if entry.href}
-					<a
-						class="action"
-						href={entry.href}
-						target={entry.href.startsWith('/') ? undefined : '_blank'}
-						rel="noreferrer">{entry.label}</a
-					>
-				{:else}
-					<button type="button" class="action">{entry.label}</button>
+				{:else if entry.control === 'picker'}
+					<Picker
+						value={String(store[entry.key] ?? options(entry)[0] ?? '')}
+						options={options(entry)}
+						onpick={(value) => (store[entry.key] = value)}
+					/>
+				{:else if entry.control === 'slider'}
+					<div class="slider">
+						<Scrubber
+							fraction={fraction(entry.key)}
+							label={entry.title}
+							onseek={(to: number) => seek(entry.key, to)}
+						/>
+						<span class="reading">{reading(entry.key)}</span>
+					</div>
+				{:else if entry.control === 'stepper'}
+					<Control icon="minus" title="Lower" small onclick={() => step(entry.key, -1)} />
+					<span class="reading">{stepped(entry.key)}</span>
+					<Control icon="plus" title="Raise" small onclick={() => step(entry.key, 1)} />
+				{:else if entry.control === 'button'}
+					{#if entry.value}<span class="reading">{entry.value}</span>{/if}
+					{#if entry.href}
+						<a
+							class="action"
+							href={entry.href}
+							target={entry.href.startsWith('/') ? undefined : '_blank'}
+							rel="noreferrer">{entry.label}</a
+						>
+					{:else}
+						<button type="button" class="action">{entry.label}</button>
+					{/if}
+				{:else if entry.key === 'version'}
+					<span class="reading">{running}</span>
+				{:else if entry.value}
+					<span class="reading">{entry.value}</span>
 				{/if}
-			{:else if entry.key === 'version'}
-				<span class="reading">{running}</span>
-			{:else if entry.value}
-				<span class="reading">{entry.value}</span>
-			{/if}
+			</div>
 		</div>
-	</div>
+	{/if}
 {/snippet}
 
 {#snippet block(kind: Block)}
 	{#if kind === 'theme'}
-		<OptionCards
-			options={themeCards}
-			height={86}
-			chosen={(option) => option.family.variants.includes(String(settings.theme))}
-			onpick={(option) => (settings.theme = variantOf(option.family))}
-			variants={(option) => option.family.variants.length > 1}
-			onvariants={variants}
-		>
-			{#snippet thumb(option)}
-				<span class="mini"><ThemeMiniature colors={colorsOf(variantOf(option.family))} /></span>
-			{/snippet}
-		</OptionCards>
+		<div class="rail-wrap">
+			{#if edges.back}
+				<button type="button" class="arrow-btn back" aria-label="Previous" onclick={() => slide(-1)}
+					><Icon name="chevron-left" size={14} /></button
+				>
+			{/if}
+			<div class="theme-rail" bind:this={rail} onscroll={measureRail} use:watch={measureRail}>
+				{#each families as family (family.id)}
+					{@const shown = variantOf(family)}
+					{@const chosen = family.variants.includes(String(settings.theme))}
+					{@const locked = settings.adaptive && !builtIn(family.id)}
+					{@const several = family.variants.length > 1}
+					<div class="theme-card" class:chosen class:locked style:width="{CARD}px">
+						<button
+							type="button"
+							class="thumb"
+							role="radio"
+							aria-checked={chosen}
+							aria-label={several ? shown : family.label}
+							title={locked
+								? 'This theme can be applied only when adaptive theme is disabled'
+								: undefined}
+							disabled={locked}
+							style:height="{THUMB}px"
+							onclick={() => (settings.theme = shown)}
+						>
+							{#each slicesOf(family) as variant, at (variant)}
+								{@const count = slicesOf(family).length}
+								<span
+									class="slice"
+									style:clip-path="inset(0 {100 - ((at + 1) / count) * 100}% 0 {(at / count) *
+										100}%)"
+								>
+									<ThemeMiniature colors={colorsOf(variant)} />
+								</span>
+							{/each}
+						</button>
+						<button
+							type="button"
+							class="name"
+							disabled={locked}
+							onclick={(event) =>
+								several ? variants(family, event.currentTarget) : (settings.theme = shown)}
+						>
+							<span>{several ? shown : family.label}</span>
+							{#if several}<Icon name="chevron-down" size={12} />{/if}
+						</button>
+					</div>
+				{/each}
+				<div class="theme-card" style:width="{CARD}px">
+					<button
+						type="button"
+						class="thumb dashed"
+						aria-label="Open folder"
+						style:height="{THUMB}px"
+					>
+						<Icon name="folder-plus" size={18} />
+					</button>
+					<span class="name">Open folder</span>
+				</div>
+			</div>
+			{#if edges.on}
+				<button type="button" class="arrow-btn on" aria-label="Next" onclick={() => slide(1)}
+					><Icon name="chevron-right" size={14} /></button
+				>
+			{/if}
+		</div>
 	{:else if kind === 'icons'}
 		<OptionCards
 			options={PACKS.map((id) => ({ id, label: id }))}
+			{columns}
 			height={56}
 			chosen={(option) => settings.icons === option.id}
 			onpick={(option) => (settings.icons = option.id)}
 		>
 			{#snippet thumb(option)}
 				<span class="glyphs">
-					{#each SAMPLE as name (name)}<Icon {name} pack={option.id} size={18} />{/each}
+					{#each SAMPLE as name (name)}<Icon {name} pack={option.id} size={16} />{/each}
 				</span>
 			{/snippet}
 		</OptionCards>
 	{:else if kind === 'corners'}
 		<OptionCards
 			options={corners.map((id) => ({ id, label: id }))}
+			{columns}
 			height={56}
 			chosen={(option) => settings.corners === option.id}
 			onpick={(option) => (settings.corners = option.id)}
@@ -302,6 +432,7 @@
 	{:else if kind === 'visualizer'}
 		<OptionCards
 			options={visualizers.map((id) => ({ id, label: id }))}
+			{columns}
 			height={56}
 			chosen={(option) => settings.visualizer === option.id}
 			onpick={(option) => (settings.visualizer = option.id)}
@@ -325,6 +456,7 @@
 	{:else if kind === 'layout'}
 		<OptionCards
 			options={layouts.map((id) => ({ id, label: id }))}
+			{columns}
 			height={64}
 			chosen={(option) => settings.playerBar === option.id}
 			onpick={(option) => (settings.playerBar = option.id)}
@@ -344,6 +476,7 @@
 	{:else if kind === 'quality'}
 		<OptionCards
 			options={qualities.map((one) => ({ id: one.id, label: one.id, detail: one.detail }))}
+			{columns}
 			height={48}
 			chosen={(option) => settings.streamQuality === option.id}
 			onpick={(option) => (settings.streamQuality = option.id)}
@@ -1219,6 +1352,36 @@
 		color: var(--m-foreground);
 	}
 
+	.whole {
+		display: flex;
+		width: calc(100% + 21px);
+		height: 52px;
+		align-items: center;
+		gap: 10.5px;
+		margin: 0 -10.5px;
+		padding: 0 10.5px;
+		border: 0;
+		border-radius: var(--m-radius);
+		background: none;
+		color: var(--m-foreground);
+		font: inherit;
+		text-align: left;
+		text-decoration: none;
+		cursor: pointer;
+	}
+
+	.whole:hover {
+		background: var(--m-secondary-hover);
+	}
+
+	.whole .title {
+		flex: 1;
+	}
+
+	.whole :global(svg) {
+		color: var(--m-muted-foreground);
+	}
+
 	.drill {
 		display: flex;
 		width: 32px;
@@ -1237,9 +1400,123 @@
 		color: var(--m-foreground);
 	}
 
-	.mini {
-		display: block;
+	.rail-wrap {
+		position: relative;
+		margin: 0 -8px;
+	}
+
+	.theme-rail {
+		display: flex;
+		gap: 12px;
+		padding: 8px;
+		overflow-x: auto;
+		scrollbar-width: none;
+		scroll-behavior: smooth;
+	}
+
+	.theme-rail::-webkit-scrollbar {
+		display: none;
+	}
+
+	.theme-card {
+		display: flex;
+		flex: none;
+		flex-direction: column;
+		align-items: center;
+		gap: 5.25px;
+	}
+
+	.theme-card .thumb {
+		position: relative;
+		display: flex;
 		width: 100%;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+		padding: 0;
+		border: 1px solid var(--m-border);
+		border-radius: var(--m-radius);
+		background: none;
+		color: var(--m-muted-foreground);
+		cursor: pointer;
+	}
+
+	.theme-card .thumb.dashed {
+		border-style: dashed;
+	}
+
+	.theme-card.chosen .thumb {
+		outline: 2px solid var(--m-primary);
+		outline-offset: 2px;
+	}
+
+	.theme-card.locked {
+		opacity: 0.45;
+	}
+
+	.theme-card.locked .thumb,
+	.theme-card.locked .name {
+		cursor: default;
+	}
+
+	.slice {
+		position: absolute;
+		inset: 0;
+		display: flex;
+	}
+
+	.slice :global(svg) {
+		width: 100%;
+		height: 100%;
+	}
+
+	.theme-card .name {
+		display: inline-flex;
+		max-width: 100%;
+		align-items: center;
+		gap: 4px;
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--m-muted-foreground);
+		font: inherit;
+		font-size: 13px;
+		cursor: pointer;
+	}
+
+	.theme-card .name span {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.theme-card.chosen .name {
+		color: var(--m-foreground);
+	}
+
+	.arrow-btn {
+		position: absolute;
+		top: calc(8px + 48px);
+		z-index: 2;
+		display: flex;
+		width: 26px;
+		height: 26px;
+		align-items: center;
+		justify-content: center;
+		border: 1px solid var(--m-border);
+		border-radius: 50%;
+		background: var(--m-popover);
+		color: var(--m-foreground);
+		transform: translateY(-50%);
+		cursor: pointer;
+	}
+
+	.arrow-btn.back {
+		left: 0;
+	}
+
+	.arrow-btn.on {
+		right: 0;
 	}
 
 	.glyphs {
