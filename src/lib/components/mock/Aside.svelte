@@ -44,12 +44,15 @@
 	);
 
 	let roll = $state<HTMLElement | null>(null);
+	/** The lyrics' width, which a resized panel changes, so the lines rewrap and the pin moves. */
+	let span = $state(0);
 	let sheet = $state<HTMLElement | null>(null);
 	let lift = $state(0);
 	let veils = $state<number[]>([]);
 
 	$effect(() => {
 		void active;
+		void span;
 		void settings.blur;
 		if (!roll || !sheet) return;
 		const line = sheet.children[Math.max(active, 0)];
@@ -157,6 +160,7 @@
 	$effect(() => {
 		void active;
 		void tab;
+		void span;
 		untrack(measure);
 		if (settled) return;
 		settled = true;
@@ -235,7 +239,7 @@
 	{/if}
 
 	{#if tab === 'lyrics' && verses.length}
-		<div class="verses" bind:this={roll}>
+		<div class="verses" bind:this={roll} bind:clientWidth={span}>
 			<div class="sheet" bind:this={sheet} style:transform="translateY({lift}px)">
 				{#each verses as line, index (line.start)}
 					<p
@@ -371,7 +375,7 @@
 		display: flex;
 		flex: none;
 		flex-direction: column;
-		width: 254px;
+		width: var(--m-right, 254px);
 		overflow: hidden;
 		background: var(--m-background);
 		border-left: 1px solid var(--m-border);

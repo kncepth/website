@@ -29,7 +29,7 @@
 </script>
 
 <div class="bar">
-	<div class="leading" style:width={left ? '195px' : undefined}>
+	<div class="leading" style:width={left ? 'var(--m-left)' : undefined}>
 		<Control
 			icon={left ? 'panel-left-close' : 'panel-left-open'}
 			title="Toggle sidebar"

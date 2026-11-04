@@ -15,6 +15,7 @@
 	import Menu from './Menu.svelte';
 	import SessionDialogs from './SessionDialogs.svelte';
 	import Fullscreen from './Fullscreen.svelte';
+	import Grip from './Grip.svelte';
 	import Detail from './Detail.svelte';
 	import Artist from './screens/Artist.svelte';
 	import Equalizer from './screens/Equalizer.svelte';
@@ -32,9 +33,17 @@
 	const HEIGHT = 730;
 	const FLOOR = 0.62;
 	const FADE = 320;
+	/** The sidebars' limits, as the desktop's, and the least the page between them keeps. */
+	const LEFT_MIN = 160;
+	const LEFT_MAX = 400;
+	const RIGHT_MIN = 240;
+	const RIGHT_MAX = 560;
+	const MIN_CONTENT = 400;
 
 	let left = $state(true);
 	let right = $state(true);
+	let leftWidth = $state(195);
+	let rightWidth = $state(254);
 	let room = $state(WIDTH);
 	let tab = $state('lyrics');
 	let full = $state(false);
@@ -56,7 +65,13 @@
 	);
 
 	const still = $derived(settings.motion === 'Never');
-	const content = $derived(WIDTH - (left ? 196 : 0) - (right ? 255 : 0));
+	const content = $derived(WIDTH - (left ? leftWidth + 1 : 0) - (right ? rightWidth + 1 : 0));
+	const leftMax = $derived(
+		Math.max(LEFT_MIN, Math.min(LEFT_MAX, WIDTH - (right ? rightWidth : 0) - MIN_CONTENT))
+	);
+	const rightMax = $derived(
+		Math.max(RIGHT_MIN, Math.min(RIGHT_MAX, WIDTH - (left ? leftWidth : 0) - MIN_CONTENT))
+	);
 
 	let fading = $state(false);
 	let settle = 0;
@@ -113,6 +128,8 @@
 			{style}
 			style:color-scheme={scheme}
 			style:--m-radius="{radius()}px"
+			style:--m-left="{leftWidth}px"
+			style:--m-right="{rightWidth}px"
 			style:transform="scale({scale})"
 		>
 			{#if full}
@@ -151,6 +168,24 @@
 						<Members />
 					{:else if right}
 						<Aside {tab} />
+					{/if}
+					{#if left}
+						<Grip
+							side="left"
+							bind:width={leftWidth}
+							min={LEFT_MIN}
+							max={leftMax}
+							label="Resize the sidebar"
+						/>
+					{/if}
+					{#if right}
+						<Grip
+							side="right"
+							bind:width={rightWidth}
+							min={RIGHT_MIN}
+							max={rightMax}
+							label="Resize the side panel"
+						/>
 					{/if}
 				</div>
 				<PlayerBar bind:tab onfullscreen={() => (full = true)} />
@@ -191,6 +226,7 @@
 	}
 
 	.body {
+		position: relative;
 		display: flex;
 		flex: 1;
 		min-height: 0;

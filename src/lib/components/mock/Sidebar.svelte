@@ -113,7 +113,7 @@
 		flex: none;
 		flex-direction: column;
 		gap: 3.5px;
-		width: 195px;
+		width: var(--m-left, 195px);
 		padding: 10.5px;
 		overflow-y: auto;
 		scrollbar-width: thin;

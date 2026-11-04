@@ -76,7 +76,7 @@
 		display: flex;
 		flex: none;
 		flex-direction: column;
-		width: 254px;
+		width: var(--m-right, 254px);
 		overflow: hidden;
 		background: var(--m-background);
 		border-left: 1px solid var(--m-border);

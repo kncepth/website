@@ -19,15 +19,18 @@
 	}: { columns?: Column[]; rows?: Track[]; framed?: boolean; album?: string } = $props();
 
 	const span = $derived(columns.reduce((sum, column) => sum + column.width, 0));
-	const head = $derived(columns.map((column) => `${column.width}px`).join(' '));
+	/** Text columns share what the page has and give way down to a floor, as the desktop's do. */
+	const FLEXIBLE = new Set(['title', 'artist', 'album']);
+	const FLOOR = 64;
+	const track = (column: Column, trim: number) =>
+		FLEXIBLE.has(column.key) ? `minmax(${FLOOR}px, ${column.width}fr)` : `${column.width - trim}px`;
+	const head = $derived(columns.map((column) => track(column, 0)).join(' '));
 	const body = $derived(
-		columns
-			.map((column, at) => `${column.width - (at + 1 === columns.length ? TRAIL : 0)}px`)
-			.join(' ')
+		columns.map((column, at) => track(column, at + 1 === columns.length ? TRAIL : 0)).join(' ')
 	);
 </script>
 
-<div class="table" class:framed style:width={framed ? `${span + 2}px` : undefined}>
+<div class="table" class:framed style:max-width={framed ? `${span + 2}px` : undefined}>
 	<div class="head" style:grid-template-columns={head}>
 		{#each columns as column (column.key)}
 			<span class="cell">
@@ -105,6 +108,7 @@
 	}
 
 	.table.framed {
+		width: 100%;
 		box-sizing: border-box;
 		border: 1px solid var(--m-border);
 		border-radius: var(--m-radius);
