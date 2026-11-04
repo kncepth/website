@@ -8,11 +8,15 @@
 	let { kind }: { kind: 'now-playing' | 'lyrics' | 'sound' | 'discord' } = $props();
 
 	const BARS = 28;
-	const LINES = [
-		'I leaned my back against an oak',
-		'Thinking it was a trusty tree',
-		'But first it bent and then it broke'
+	/** The desktop's sample verses, the Japanese one sung with its romanization under it. */
+	const SAMPLE = [
+		'Arbitrary data',
+		'Insert funny text right here',
+		'ここに面白い文章を入れてください',
+		'I hope this Japanese checks out',
+		'The fifth line'
 	];
+	const ROMANIZED = 'koko ni omoshiroi bunshou o irete kudasai';
 
 	const tint = $derived(shelf.get(player.track.album)?.tint);
 	const wash = $derived(
@@ -79,21 +83,20 @@
 			{/if}
 		</div>
 	{:else if kind === 'lyrics'}
-		<div class="sheet">
-			{#each LINES as line, at (line)}
-				<p
-					class="line"
-					class:now={at === 1}
-					class:hazy={at !== 1 && settings.blurLyrics}
-					style:font-size="{Math.round(17 * Number(settings.panelLyrics))}px"
-				>
-					{#if at === 1 && settings.karaoke}
-						<span class="lit">Thinking it was</span> a trusty tree
-					{:else}
-						{line}
-					{/if}
+		<div
+			class="sheet"
+			style:background={wash}
+			style:font-size="{Math.round(30 * Number(settings.panelLyrics))}px"
+		>
+			<p class="line gone" class:hazy={settings.blurLyrics}>{SAMPLE[1]}</p>
+			<div class="sung">
+				<p class="line now" class:swept={settings.karaoke}>
+					<span class="base">{SAMPLE[2]}</span>
+					{#if settings.karaoke}<span class="lit" aria-hidden="true">{SAMPLE[2]}</span>{/if}
 				</p>
-			{/each}
+				{#if settings.romanized}<p class="roman">{ROMANIZED}</p>{/if}
+			</div>
+			<p class="line next" class:hazy={settings.blurLyrics}>{SAMPLE[3]}</p>
 		</div>
 	{:else if kind === 'sound'}
 		<div class="path">
@@ -145,10 +148,15 @@
 					{/if}
 				</span>
 			</div>
-			{#if settings.discordButtons && !settings.discordAnonymous}
-				<div class="buttons">
-					<span>Play on {accounts.current?.name ?? 'Sonora'}</span>
-					<span>Get Sonora</span>
+			{#if settings.discordShown.length && !settings.discordAnonymous}
+				<div
+					class="buttons"
+					style:grid-template-columns="repeat({settings.discordShown.length}, 1fr)"
+				>
+					{#if settings.discordShown.includes('Provider')}
+						<span>Play on {accounts.current?.name ?? 'Sonora'}</span>
+					{/if}
+					{#if settings.discordShown.includes('Sonora')}<span>Get Sonora</span>{/if}
 				</div>
 			{/if}
 		</div>
@@ -222,31 +230,78 @@
 	}
 
 	.sheet {
-		padding: 14px 21px;
+		position: relative;
+		display: flex;
+		aspect-ratio: 1 / 0.4;
+		flex-direction: column;
+		justify-content: center;
+		gap: 0.3em;
+		overflow: hidden;
+		padding: 0 1.1em;
+		color: #fafafa;
+		transition: background 320ms ease;
 	}
 
-	.line {
+	.line,
+	.roman {
 		margin: 0;
-		padding: 3px 0;
-		font-weight: 600;
-		color: color-mix(in srgb, var(--m-muted-foreground) 60%, transparent);
+		font-weight: 700;
+		line-height: 1.2;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.gone,
+	.next {
+		font-size: 0.8em;
+		color: rgb(255 255 255 / 0.32);
 		transition: filter 200ms ease;
 	}
 
-	.line.now {
-		color: var(--m-muted-foreground);
-	}
-
-	.line.now:not(:has(.lit)) {
-		color: var(--m-foreground);
-	}
-
 	.hazy {
-		filter: blur(1.5px);
+		filter: blur(2.5px);
+	}
+
+	.now {
+		position: relative;
+		white-space: normal;
+		color: rgb(255 255 255 / 0.5);
+	}
+
+	.now:not(.swept) {
+		color: #fff;
 	}
 
 	.lit {
-		color: var(--m-foreground);
+		position: absolute;
+		inset: 0;
+		color: #fff;
+		clip-path: inset(0 100% 0 0);
+		animation: sweep 3.2s linear infinite;
+	}
+
+	@keyframes sweep {
+		0% {
+			clip-path: inset(0 100% 0 0);
+		}
+		80%,
+		100% {
+			clip-path: inset(0 0 0 0);
+		}
+	}
+
+	.roman {
+		font-size: 0.6em;
+		font-weight: 600;
+		color: rgb(255 255 255 / 0.6);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.lit {
+			animation: none;
+			clip-path: inset(0 45% 0 0);
+		}
 	}
 
 	.path {

@@ -71,7 +71,15 @@ export const settings = $state({
 	discordHideOnConnect: true,
 	discordButtons: true,
 	lyricsOrder: ['Spotify', 'LRCLIB', 'Musixmatch', 'NetEase', 'Genius'],
-	lyricsOff: [] as string[]
+	lyricsOff: [] as string[],
+	sleepAfter: 0,
+	cacheGb: 2,
+	discordShown: ['Provider', 'Sonora'] as string[],
+	sessionsServer: '',
+	connectCustom: '',
+	scripts: ['Japanese', 'Chinese', 'Korean'] as string[],
+	scrobbles: { lastfm: true } as Record<string, boolean>,
+	linked: ['lastfm'] as string[]
 });
 
 export const radius = (): number => rounding[settings.corners] ?? 10;

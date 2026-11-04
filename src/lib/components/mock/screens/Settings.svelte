@@ -19,6 +19,7 @@
 		type Section
 	} from '$lib/mock/catalog';
 	import { accounts } from '$lib/mock/accounts.svelte';
+	import { equalizer, presets, profiles } from '$lib/mock/equalizer.svelte';
 	import { menu } from '$lib/mock/menu.svelte';
 	import { reach } from '$lib/mock/packs.svelte';
 	import { settings } from '$lib/mock/settings.svelte';
@@ -74,6 +75,7 @@
 	let drill = $state<string | null>(null);
 
 	const PACKS = ['Lucide', 'Iconoir', 'Remix', 'Solar'];
+	const sounds = [...Object.keys(presets), ...profiles];
 	const SAMPLE = ['house', 'heart-filled', 'play-filled', 'shuffle', 'search'];
 	/** The few rows the desktop still explains under their label. Every other row's
 	 *  explanation only feeds the settings search. */
@@ -110,6 +112,9 @@
 		if (row.needs === 'keepTracks') return settings.keepTracks;
 		if (row.needs === 'spotifyConnect') return settings.spotifyConnect;
 		if (row.needs === 'clientDecorations') return !settings.serverDecorations;
+		if (row.needs === 'customSessions') return !settings.sessionsOfficial;
+		if (row.needs === 'customConnect')
+			return settings.spotifyConnect && settings.connectName === 'Custom';
 		return true;
 	}
 
@@ -150,12 +155,22 @@
 	function reading(key: string): string {
 		if (key === 'opacity') return `${Math.round(settings.opacity * 100)}%`;
 		if (key === 'fontSize') return `${settings.fontSize} px`;
-		if (key === 'panelLyrics') return `${Math.round(settings.panelLyrics * 100)}%`;
-		if (key === 'fullscreenLyrics') return `${Math.round(settings.fullscreenLyrics * 100)}%`;
+		if (key === 'sleep') {
+			const after = settings.sleepAfter;
+			return after === 0 ? 'Off' : after > SLEEP_MAX ? 'End of track' : `${after} mins`;
+		}
+		if (key === 'cacheSize') return `${settings.cacheGb} GB`;
 		return '';
 	}
 
+	/** The sleep slider's range: off at the left, a minute a step up to two hours, then end of
+	 *  track at the far right, as the desktop's. */
+	const SLEEP_MAX = 120;
+	const CACHE_MAX = 20;
+
 	function fraction(key: string): number {
+		if (key === 'sleep') return settings.sleepAfter / (SLEEP_MAX + 1);
+		if (key === 'cacheSize') return (settings.cacheGb - 1) / (CACHE_MAX - 1);
 		if (key === 'opacity') return Number(settings.opacity);
 		if (key === 'fontSize') return (Number(settings.fontSize) - 10) / 14;
 		return (Number(store[key]) - 0.5) / 1.5;
@@ -164,10 +179,18 @@
 	function seek(key: string, to: number) {
 		if (key === 'opacity') settings.opacity = Math.round(Math.max(to, 0.3) * 100) / 100;
 		else if (key === 'fontSize') settings.fontSize = Math.round(10 + to * 14);
+		else if (key === 'sleep') {
+			settings.sleepAfter = Math.round(to * (SLEEP_MAX + 1));
+			settings.sleep = settings.sleepAfter > 0;
+		} else if (key === 'cacheSize') settings.cacheGb = Math.round(1 + to * (CACHE_MAX - 1));
 		else store[key] = Math.round((0.5 + to * 1.5) * 20) / 20;
 	}
 
 	function step(key: string, by: number) {
+		if (key === 'panelLyrics' || key === 'fullscreenLyrics') {
+			store[key] = Math.round(Math.min(Math.max(Number(store[key]) + by * 0.1, 0.5), 2) * 10) / 10;
+			return;
+		}
 		if (key === 'fontSize') {
 			settings.fontSize = Math.min(Math.max(Number(settings.fontSize) + by, 10), 24);
 			return;
@@ -178,11 +201,13 @@
 	}
 
 	const stepped = (key: string) =>
-		key === 'fontSize'
-			? `${settings.fontSize} px`
-			: key === 'sampleRate'
-				? `${settings.sampleRate} kHz`
-				: `${settings.buffer} frames`;
+		key === 'panelLyrics' || key === 'fullscreenLyrics'
+			? `${Math.round(Number(store[key]) * 100)}%`
+			: key === 'fontSize'
+				? `${settings.fontSize} px`
+				: key === 'sampleRate'
+					? `${settings.sampleRate} kHz`
+					: `${settings.buffer} frames`;
 
 	/** The variant each family's card names, once one of its variants was chosen. */
 	let remembered = $state<Record<string, string>>({});
@@ -256,7 +281,30 @@
 </script>
 
 {#snippet row(entry: Row)}
-	{#if entry.control === 'drill' || entry.href}
+	{#if entry.control === 'equalizer'}
+		<!-- the way into the equalizer: the row opens its page, its picker and switch work in place -->
+		<div
+			class="whole"
+			role="button"
+			tabindex="0"
+			aria-label={entry.title}
+			onclick={() => open({ ...entry, opens: 'equalizer' })}
+			onkeydown={(event) => event.key === 'Enter' && open({ ...entry, opens: 'equalizer' })}
+		>
+			<span class="title">{entry.title}</span>
+			<span class="hold" role="presentation" onclick={(event) => event.stopPropagation()}>
+				<Picker
+					value={equalizer.sound}
+					options={sounds}
+					onpick={(name) => equalizer.choose(name)}
+				/>
+			</span>
+			<span class="hold" role="presentation" onclick={(event) => event.stopPropagation()}>
+				<Switch checked={equalizer.enabled} label="Equalizer" onchange={() => equalizer.toggle()} />
+			</span>
+			<Icon name="chevron-right" size={14} />
+		</div>
+	{:else if entry.control === 'drill' || entry.href}
 		{@const outward = !!entry.href && !entry.href.startsWith('/')}
 		<!-- a row that opens a page or a link is one whole button, its icon at the end -->
 		<svelte:element
@@ -283,7 +331,50 @@
 					>{/if}
 			</div>
 			<div class="control">
-				{#if entry.control === 'switch'}
+				{#if entry.control === 'segmented'}
+					<div class="segments" role="radiogroup" aria-label={entry.title}>
+						{#each options(entry) as option (option)}
+							<button
+								type="button"
+								role="radio"
+								aria-checked={store[entry.key] === option}
+								class:on={store[entry.key] === option}
+								onclick={() => (store[entry.key] = option)}>{option}</button
+							>
+						{/each}
+					</div>
+				{:else if entry.control === 'toggles'}
+					<div class="segments" role="group" aria-label={entry.title}>
+						{#each options(entry) as option (option)}
+							{@const on = settings.discordShown.includes(option)}
+							<button
+								type="button"
+								aria-pressed={on}
+								class:on
+								onclick={() =>
+									(settings.discordShown = on
+										? settings.discordShown.filter((one) => one !== option)
+										: [...settings.discordShown, option])}>{option}</button
+							>
+						{/each}
+					</div>
+				{:else if entry.control === 'field'}
+					<input
+						class="text-field"
+						placeholder={entry.hint}
+						aria-label={entry.title}
+						value={String(store[entry.key] ?? '')}
+						oninput={(event) => (store[entry.key] = event.currentTarget.value)}
+					/>
+					{#if entry.label}<button type="button" class="action">{entry.label}</button>{/if}
+				{:else if entry.control === 'switch'}
+					{#if entry.extra && store[entry.key]}
+						<Picker
+							value={entry.extra}
+							options={['Japanese', 'Chinese', 'Korean', 'Cyrillic', 'Greek', 'Arabic']}
+							onpick={() => {}}
+						/>
+					{/if}
 					<Switch
 						checked={Boolean(store[entry.key])}
 						label={entry.title}
@@ -544,22 +635,44 @@
 			{/each}
 		</div>
 	{:else if kind === 'scrobbling'}
-		<div class="deck">
-			{#each scrobblers as service (service.id)}
-				<div class="account">
-					<div class="text">
-						<span class="title">{service.name}</span>
-						<span class="detail">{service.detail || service.status}</span>
-					</div>
-					{#if service.linked}
-						<Switch checked onchange={() => {}} />
+		{#each scrobblers as service (service.id)}
+			{@const linked = settings.linked.includes(service.id)}
+			{@const on = settings.scrobbles[service.id] ?? false}
+			<div class="row">
+				<div class="text"><span class="title">{service.name}</span></div>
+				<div class="control">
+					{#if linked}
+						{#if on}
+							<span class="reading status"
+								>{service.status.startsWith('Scrobbling') ? service.status : 'Connected'}</span
+							>
+						{/if}
+						<Switch
+							checked={on}
+							label={service.name}
+							onchange={(value) =>
+								(settings.scrobbles = { ...settings.scrobbles, [service.id]: value })}
+						/>
+						<button
+							type="button"
+							class="action"
+							onclick={() =>
+								(settings.linked = settings.linked.filter((one) => one !== service.id))}
+							>Disconnect</button
+						>
+					{:else}
+						<button
+							type="button"
+							class="action"
+							onclick={() => {
+								settings.linked = [...settings.linked, service.id];
+								settings.scrobbles = { ...settings.scrobbles, [service.id]: true };
+							}}>Connect</button
+						>
 					{/if}
-					<button type="button" class="action">
-						{service.linked ? 'Disconnect' : 'Connect'}
-					</button>
 				</div>
-			{/each}
-		</div>
+			</div>
+		{/each}
 	{:else if kind === 'priority'}
 		<div class="sources">
 			{#each settings.lyricsOrder as source, at (source)}
@@ -1368,6 +1481,54 @@
 		text-align: left;
 		text-decoration: none;
 		cursor: pointer;
+	}
+
+	.hold {
+		display: flex;
+		flex: none;
+	}
+
+	.segments {
+		display: flex;
+		gap: 2px;
+		padding: 2px;
+		border: 1px solid var(--m-border);
+		border-radius: var(--m-radius);
+	}
+
+	.segments button {
+		height: 24px;
+		padding: 0 9px;
+		border: 0;
+		border-radius: max(calc(var(--m-radius) - 2px), 0px);
+		background: none;
+		color: var(--m-muted-foreground);
+		font: inherit;
+		font-size: 12px;
+		white-space: nowrap;
+		cursor: pointer;
+	}
+
+	.segments button:hover {
+		color: var(--m-foreground);
+	}
+
+	.segments button.on {
+		background: var(--m-secondary-active);
+		color: var(--m-foreground);
+	}
+
+	.text-field {
+		width: 220px;
+		height: 30px;
+		padding: 0 10px;
+		border: 1px solid var(--m-border);
+		border-radius: var(--m-radius);
+		background: var(--m-secondary);
+		color: var(--m-foreground);
+		font: inherit;
+		font-size: 13px;
+		outline: none;
 	}
 
 	.whole:hover {

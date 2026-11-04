@@ -14,11 +14,11 @@ export const startups = [
 
 export const visualizers = ['Off', 'Bars', 'Wave', 'Bars and wave'];
 
-export const autohides = ['Automatic', 'Always shown', 'Always hidden'];
+export const autohides = ['Automatic', 'Always hidden', 'Always shown'];
 
 export const paces = ['Slow', 'Standard', 'Quick'];
 
-export const savers = ['Off', 'Light (30 FPS)', 'Medium (20 FPS)', 'Strong (10 FPS)'];
+export const savers = ['Off', '30 FPS', '20 FPS', '10 FPS'];
 
 export const stillness = ['System', 'Always', 'Never'];
 
@@ -136,7 +136,20 @@ export type Row = {
 	key: string;
 	title: string;
 	detail?: string;
-	control: 'switch' | 'picker' | 'slider' | 'button' | 'plain' | 'stepper' | 'drill';
+	control:
+		| 'switch'
+		| 'picker'
+		| 'slider'
+		| 'button'
+		| 'plain'
+		| 'stepper'
+		| 'drill'
+		| 'segmented'
+		| 'toggles'
+		| 'equalizer'
+		| 'field';
+	/** A text field's hint, for a `field` row. */
+	hint?: string;
 	options?: string[];
 	label?: string;
 	value?: string;
@@ -259,21 +272,21 @@ const general: Section = {
 					key: 'motion',
 					title: 'Reduce motion',
 					detail: 'Skip interface animations and transitions',
-					control: 'picker',
+					control: 'segmented',
 					options: stillness
 				},
 				{
 					key: 'pace',
 					title: 'Animation speed',
 					detail: 'How fast interface animations play',
-					control: 'picker',
+					control: 'segmented',
 					options: paces
 				},
 				{
 					key: 'saver',
 					title: 'Throttle inactive window',
 					detail: 'Changes apply after restarting Sonora.',
-					control: 'picker',
+					control: 'segmented',
 					options: savers
 				}
 			]
@@ -508,7 +521,7 @@ const nowPlaying: Section = {
 					key: 'fullscreenControls',
 					title: 'Hide controls',
 					detail: 'Fade out the playback controls in Now playing while the pointer rests',
-					control: 'picker',
+					control: 'segmented',
 					options: autohides
 				},
 				{
@@ -547,19 +560,20 @@ const lyrics: Section = {
 					key: 'romanized',
 					title: 'Romanized lyrics',
 					detail: 'Show locally generated pronunciation for selected writing systems',
-					control: 'switch'
+					control: 'switch',
+					extra: 'Writing systems'
 				},
 				{
 					key: 'panelLyrics',
 					title: 'Text size in the panel',
 					detail: 'Size of the lyrics text in the side panel, on top of the base font size',
-					control: 'slider'
+					control: 'stepper'
 				},
 				{
 					key: 'fullscreenLyrics',
 					title: 'Text size in Now playing',
 					detail: 'Size of the lyrics text in Now playing, on top of the base font size',
-					control: 'slider'
+					control: 'stepper'
 				}
 			]
 		},
@@ -630,7 +644,7 @@ const playback: Section = {
 					key: 'sleep',
 					title: 'Sleep timer',
 					detail: 'Lets the music stop on its own after a set time, so it can play you to sleep',
-					control: 'switch'
+					control: 'slider'
 				},
 				{
 					key: 'stayAwake',
@@ -659,6 +673,14 @@ const playback: Section = {
 					key: 'sessionsOfficial',
 					title: 'Use the official Sonora Sessions server',
 					control: 'switch'
+				},
+				{
+					key: 'sessionsServer',
+					title: 'Server address',
+					control: 'field',
+					hint: 'wss://sessions.example.com',
+					label: 'Save',
+					needs: 'customSessions'
 				}
 			]
 		},
@@ -680,6 +702,13 @@ const playback: Section = {
 					control: 'picker',
 					options: ['Sonora', 'Sonora on this computer', 'Custom'],
 					needs: 'spotifyConnect'
+				},
+				{
+					key: 'connectCustom',
+					title: 'Custom name',
+					control: 'field',
+					hint: 'Sonora',
+					needs: 'customConnect'
 				}
 			]
 		}
@@ -730,7 +759,7 @@ const sound: Section = {
 					key: 'equalizer',
 					title: 'Equalizer',
 					detail: 'Shapes the sound with a preset or a curve of your own',
-					control: 'drill',
+					control: 'equalizer',
 					opens: 'equalizer'
 				}
 			]
@@ -757,7 +786,7 @@ const storage: Section = {
 					key: 'cacheSize',
 					title: 'Cache size',
 					detail: 'How much space the tracks you played may take',
-					control: 'picker',
+					control: 'slider',
 					options: ['1 GB', '2 GB', '5 GB', '10 GB'],
 					needs: 'keepTracks'
 				},
@@ -860,7 +889,8 @@ const discord: Section = {
 					title: 'Buttons',
 					detail:
 						'Links under the status for your friends to open, one to the track on its service and one to Sonora',
-					control: 'switch',
+					control: 'toggles',
+					options: ['Provider', 'Sonora'],
 					needs: 'discord'
 				}
 			]
