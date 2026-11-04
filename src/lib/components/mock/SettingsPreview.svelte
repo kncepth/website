@@ -4,11 +4,13 @@
 	import { player } from '$lib/mock/player.svelte';
 	import { settings } from '$lib/mock/settings.svelte';
 	import Logo from '../Logo.svelte';
+	import { palette } from '$lib/mock/theme';
+	import Ambient from './Ambient.svelte';
 	import Icon from './Icon.svelte';
+	import Visualizer from './Visualizer.svelte';
 
 	let { kind }: { kind: 'now-playing' | 'lyrics' | 'sound' | 'discord' } = $props();
 
-	const BARS = 28;
 	/** The desktop's sample verses, the Japanese one sung with its romanization under it. */
 	const SAMPLE = [
 		'Arbitrary data',
@@ -20,6 +22,8 @@
 	const ROMANIZED = 'koko ni omoshiroi bunshou o irete kudasai';
 
 	const tint = $derived(shelf.get(player.track.album)?.tint);
+	/** The visualizer's colour, the accent Now playing takes from the cover. */
+	const accent = $derived(palette(tint, true, 'Dark')['--m-primary']);
 	const wash = $derived(
 		tint
 			? `radial-gradient(120% 140% at 20% 20%, hsl(${tint.hue} 45% 32%), transparent 60%), radial-gradient(120% 140% at 90% 90%, hsl(${tint.second?.hue ?? tint.hue} 40% 26%), transparent 60%), #0b0b0b`
@@ -29,21 +33,14 @@
 	let tick = $state(0);
 	$effect(() => {
 		if (!player.playing) return;
-		const timer = setInterval(() => (tick += 1), 120);
-		return () => clearInterval(timer);
+		let frame = 0;
+		const run = () => {
+			tick += 0.25;
+			frame = requestAnimationFrame(run);
+		};
+		frame = requestAnimationFrame(run);
+		return () => cancelAnimationFrame(frame);
 	});
-
-	const levels = $derived(
-		Array.from({ length: BARS }, (_, at) => {
-			const swing = Math.sin(at * 0.9 + tick * 0.7) * 0.5 + Math.sin(at * 0.37 - tick * 0.45) * 0.5;
-			const shape = 1 - Math.abs(at - BARS * 0.3) / BARS;
-			const loud = settings.visualizerAbsolute ? 1 : 0.4 + player.volume * 0.6;
-			return Math.max(0.08, (0.35 + swing * 0.3) * shape * loud * (player.playing ? 1 : 0.25));
-		})
-	);
-	const wave = $derived(
-		levels.map((level, at) => `${(at / (BARS - 1)) * 100},${40 - level * 34}`).join(' ')
-	);
 
 	const album = $derived(shelf.get(player.track.album)?.title ?? '');
 	/** The buttons under the status: the track on its service unless details are hidden, and
@@ -78,29 +75,23 @@
 
 <div class="preview" aria-hidden="true">
 	{#if kind === 'now-playing'}
-		<div class="stage" style:background={settings.ambient ? wash : 'var(--m-background)'}>
+		<!-- a frame of Now playing: the cover over its ambient field, with the visualizer the
+		     page's style picks drawn from the same spectrum as the real one -->
+		<div class="stage" class:plain={!settings.ambient}>
+			{#if settings.ambient}<Ambient {tint} moving={settings.ambientMotion} />{/if}
 			<img class="cover" src={player.track.cover} alt="" />
 			<div class="words">
 				<span class="title">{player.track.title}</span>
 				<span class="artist">{player.track.artist}</span>
 			</div>
 			{#if settings.visualizer !== 'Off'}
-				<svg class="spectrum" viewBox="0 0 100 40" preserveAspectRatio="none">
-					{#if settings.visualizer === 'Bars' || settings.visualizer === 'Bars and wave'}
-						{#each levels as level, at (at)}
-							<rect
-								x={(at / BARS) * 100 + 0.6}
-								y={40 - level * 34}
-								width={100 / BARS - 1.2}
-								height={level * 34}
-								rx="0.6"
-							/>
-						{/each}
-					{/if}
-					{#if settings.visualizer === 'Wave' || settings.visualizer === 'Bars and wave'}
-						<polyline points={wave} vector-effect="non-scaling-stroke" />
-					{/if}
-				</svg>
+				<Visualizer
+					color={accent}
+					style={String(settings.visualizer)}
+					playing={player.playing}
+					gain={settings.visualizerAbsolute ? 1 : player.volume}
+					max={70}
+				/>
 			{/if}
 		</div>
 	{:else if kind === 'lyrics'}
@@ -212,8 +203,18 @@
 		align-items: center;
 		gap: 14px;
 		padding: 0 21px;
+		overflow: hidden;
+		background: #0b0b0b;
 		color: #fafafa;
-		transition: background 320ms ease;
+	}
+
+	.stage.plain {
+		background: var(--m-background);
+		color: var(--m-foreground);
+	}
+
+	.stage.plain .artist {
+		color: var(--m-muted-foreground);
 	}
 
 	.cover {
@@ -240,26 +241,6 @@
 	.artist {
 		font-size: 13px;
 		color: rgb(255 255 255 / 0.62);
-	}
-
-	.spectrum {
-		position: absolute;
-		right: 0;
-		bottom: 0;
-		left: 0;
-		width: 100%;
-		height: 70px;
-		fill: color-mix(in srgb, var(--m-primary) 45%, transparent);
-		stroke: var(--m-primary);
-		stroke-width: 1.5;
-	}
-
-	.spectrum rect {
-		stroke: none;
-	}
-
-	.spectrum polyline {
-		fill: none;
 	}
 
 	.sheet {
