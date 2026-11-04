@@ -1,0 +1,21 @@
+{
+	"name": "Prism Gradient",
+	"author": "ADI",
+	"version": 1,
+	"theme": {
+		"background": "#191c2b",
+		"foreground": "#f2f1fa",
+		"sidebar": "#202437",
+		"popover": "#2b3048",
+		"secondary": "#303650",
+		"muted": "#414866",
+		"muted_foreground": "#b4b8cf",
+		"border": "#858bab66",
+		"primary": "#b278ff",
+		"primary_foreground": "#191329",
+		"progress_bar": "#37dfc3",
+		"selection": "#7056c8",
+		"table_active": "#ff6fb833",
+		"table_active_border": "#ffb454"
+	}
+}
