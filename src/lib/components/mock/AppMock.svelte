@@ -29,7 +29,7 @@
 	import Sidebar from './Sidebar.svelte';
 	import TitleBar from './TitleBar.svelte';
 
-	const WIDTH = 1180;
+	const WIDTH = 1170;
 	const HEIGHT = 730;
 	const FLOOR = 0.62;
 	const FADE = 320;
@@ -241,7 +241,7 @@
 	.app {
 		position: relative;
 		display: flex;
-		width: 1180px;
+		width: 1170px;
 		height: 730px;
 		flex-direction: column;
 		transform-origin: top left;

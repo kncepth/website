@@ -3,7 +3,7 @@
 	import Gallery from './Gallery.svelte';
 	import AppMock from './mock/AppMock.svelte';
 
-	const FULL = 1180;
+	const FULL = 1170;
 	const FRAME = 2;
 
 	const shots = [
@@ -107,7 +107,7 @@
 
 	.ghost {
 		display: none;
-		width: 1182px;
+		width: 1172px;
 		height: 732px;
 	}
 

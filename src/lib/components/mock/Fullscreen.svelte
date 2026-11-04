@@ -14,7 +14,7 @@
 	let { panel = $bindable('lyrics'), onleave }: { panel?: string | null; onleave?: () => void } =
 		$props();
 
-	const WIDTH = 1180;
+	const WIDTH = 1170;
 	const HEIGHT = 730;
 	const TITLE_BAR = 36;
 	const PLAYER_BAR = 76;
@@ -244,7 +244,7 @@
 	.fullscreen {
 		position: relative;
 		display: flex;
-		width: 1180px;
+		width: 1170px;
 		height: 730px;
 		flex-direction: column;
 		overflow: hidden;
