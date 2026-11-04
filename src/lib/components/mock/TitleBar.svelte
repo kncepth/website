@@ -97,7 +97,6 @@
 			icon={right ? 'panel-right-close' : 'panel-right-open'}
 			title="Show or hide lyrics and queue"
 			small
-			selected={right}
 			onclick={() => (right = !right)}
 		/>
 	</div>

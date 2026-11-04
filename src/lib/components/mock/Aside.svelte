@@ -452,6 +452,16 @@
 		transition: transform 520ms cubic-bezier(0.33, 1, 0.68, 1);
 	}
 
+	/* a line is set no wider than the desktop's REACH, 24 verse sizes, and centred in the lane,
+	   so a wide panel leaves room either side rather than running the lyrics edge to edge */
+	.verse,
+	.credit {
+		align-self: center;
+		width: 100%;
+		max-width: calc(var(--m-verse) * 24);
+		box-sizing: border-box;
+	}
+
 	.verse {
 		margin: 0;
 		padding: 3.5px 7px;
