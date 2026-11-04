@@ -1,0 +1,21 @@
+{
+	"name": "Neon Afterglow",
+	"author": "ADI",
+	"version": 1,
+	"theme": {
+		"background": "#171421",
+		"foreground": "#f3efff",
+		"sidebar": "#1e1a2b",
+		"popover": "#292438",
+		"secondary": "#302a40",
+		"muted": "#403950",
+		"muted_foreground": "#b6aec9",
+		"border": "#9389a866",
+		"primary": "#c084fc",
+		"primary_foreground": "#20162c",
+		"progress_bar": "#00e5c3",
+		"selection": "#6339a8",
+		"table_active": "#00e5c333",
+		"table_active_border": "#ff4fd8"
+	}
+}

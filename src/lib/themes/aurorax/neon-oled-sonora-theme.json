@@ -1,0 +1,21 @@
+{
+	"name": "Neon OLED",
+	"author": "ADI",
+	"version": 1,
+	"theme": {
+		"background": "#000000",
+		"foreground": "#f4f2ff",
+		"sidebar": "#08070d",
+		"popover": "#14111d",
+		"secondary": "#171421",
+		"muted": "#252130",
+		"muted_foreground": "#aaa4bd",
+		"border": "#8a819966",
+		"primary": "#d08aff",
+		"primary_foreground": "#100b18",
+		"progress_bar": "#00f0c8",
+		"selection": "#542c91",
+		"table_active": "#00f0c833",
+		"table_active_border": "#ff36c7"
+	}
+}

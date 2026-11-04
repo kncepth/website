@@ -1,0 +1,21 @@
+{
+	"name": "Neon White",
+	"author": "ADI",
+	"version": 1,
+	"theme": {
+		"background": "#f7f8fc",
+		"foreground": "#202236",
+		"sidebar": "#eef0f8",
+		"popover": "#ffffff",
+		"secondary": "#e8eaf4",
+		"muted": "#dfe2ee",
+		"muted_foreground": "#676b82",
+		"border": "#73799566",
+		"primary": "#7c3aed",
+		"primary_foreground": "#ffffff",
+		"progress_bar": "#00c9a7",
+		"selection": "#b8a5ff",
+		"table_active": "#00c9a733",
+		"table_active_border": "#ff3cac"
+	}
+}
