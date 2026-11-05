@@ -1,0 +1,21 @@
+{
+	"name": "Prism Dark",
+	"author": "ADI",
+	"version": 1,
+	"theme": {
+		"background": "#22212f",
+		"foreground": "#f0effa",
+		"sidebar": "#292838",
+		"popover": "#353346",
+		"secondary": "#38384e",
+		"muted": "#494960",
+		"muted_foreground": "#b7b7cc",
+		"border": "#9b9bb866",
+		"primary": "#b29aff",
+		"primary_foreground": "#211b32",
+		"progress_bar": "#55d6be",
+		"selection": "#7652a8",
+		"table_active": "#ffbd5933",
+		"table_active_border": "#ff82b2"
+	}
+}

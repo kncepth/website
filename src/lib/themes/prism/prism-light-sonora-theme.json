@@ -1,0 +1,21 @@
+{
+	"name": "Prism Light",
+	"author": "ADI",
+	"version": 1,
+	"theme": {
+		"background": "#f5f7ff",
+		"foreground": "#25243a",
+		"sidebar": "#e9edfa",
+		"popover": "#ffffff",
+		"secondary": "#e5eafa",
+		"muted": "#d5ddef",
+		"muted_foreground": "#626b86",
+		"border": "#7480a866",
+		"primary": "#6657d9",
+		"primary_foreground": "#ffffff",
+		"progress_bar": "#11a98c",
+		"selection": "#ffc6e5",
+		"table_active": "#ffbf6933",
+		"table_active_border": "#ed6a9d"
+	}
+}

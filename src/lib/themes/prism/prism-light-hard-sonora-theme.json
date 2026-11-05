@@ -1,0 +1,21 @@
+{
+	"name": "Prism Light Hard",
+	"author": "ADI",
+	"version": 1,
+	"theme": {
+		"background": "#ffffff",
+		"foreground": "#161526",
+		"sidebar": "#f0f1fa",
+		"popover": "#ffffff",
+		"secondary": "#e7e9f5",
+		"muted": "#cbd0e3",
+		"muted_foreground": "#535b75",
+		"border": "#505a7866",
+		"primary": "#5038c7",
+		"primary_foreground": "#ffffff",
+		"progress_bar": "#008f72",
+		"selection": "#f4b7dc",
+		"table_active": "#ffb84d44",
+		"table_active_border": "#d83e86"
+	}
+}

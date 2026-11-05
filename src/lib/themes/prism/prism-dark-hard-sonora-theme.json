@@ -1,0 +1,21 @@
+{
+	"name": "Prism Dark Hard",
+	"author": "ADI",
+	"version": 1,
+	"theme": {
+		"background": "#15141d",
+		"foreground": "#f7f4ff",
+		"sidebar": "#1b1a24",
+		"popover": "#262431",
+		"secondary": "#2a2938",
+		"muted": "#3d3b4c",
+		"muted_foreground": "#c1bdcf",
+		"border": "#a8a1b866",
+		"primary": "#d17dff",
+		"primary_foreground": "#1e1028",
+		"progress_bar": "#00d6a3",
+		"selection": "#654088",
+		"table_active": "#ffae4240",
+		"table_active_border": "#ff5470"
+	}
+}

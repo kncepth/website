@@ -1,0 +1,21 @@
+{
+	"name": "Prism OLED",
+	"author": "ADI",
+	"version": 1,
+	"theme": {
+		"background": "#000000",
+		"foreground": "#f4f2ff",
+		"sidebar": "#07070a",
+		"popover": "#101016",
+		"secondary": "#15151f",
+		"muted": "#252532",
+		"muted_foreground": "#aaa9bd",
+		"border": "#9794ad66",
+		"primary": "#e092ff",
+		"primary_foreground": "#180c20",
+		"progress_bar": "#00f0bf",
+		"selection": "#49306f",
+		"table_active": "#ffcf3333",
+		"table_active_border": "#ff4fa3"
+	}
+}
