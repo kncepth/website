@@ -1,0 +1,27 @@
+{
+	"name": "Nordic Dusk OLED",
+	"author": "kncepth",
+	"version": 1,
+	"theme": {
+		"background": "#000000",
+		"foreground": "#ECEFF4",
+		"sidebar": "#0A0A0A",
+		"popover": "#121212",
+		"secondary": "#0A0A0A",
+		"muted": "#121212",
+		"muted_foreground": "#D8DEE9",
+		"border": "#2A2A2A",
+		"primary": "#D08770",
+		"primary_foreground": "#000000",
+		"progress_bar": "#D08770",
+		"selection": "#3B4252",
+		"table_active": "#121212",
+		"table_head": "#000000",
+		"table_head_foreground": "#D08770",
+		"table_active_border": "#D08770",
+		"table_row_border": "#2A2A2A",
+		"sidebar_border": "#2A2A2A",
+		"sidebar_accent": "#D08770",
+		"title_bar_border": "#2A2A2A"
+	}
+}
