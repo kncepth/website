@@ -1,0 +1,27 @@
+{
+	"name": "Nordic Dusk Dark",
+	"author": "kncepth",
+	"version": 1,
+	"theme": {
+		"background": "#2E3440",
+		"foreground": "#ECEFF4",
+		"sidebar": "#3B4252",
+		"popover": "#434C5E",
+		"secondary": "#3B4252",
+		"muted": "#434C5E",
+		"muted_foreground": "#D8DEE9",
+		"border": "#4C566A",
+		"primary": "#D08770",
+		"primary_foreground": "#2E3440",
+		"progress_bar": "#D08770",
+		"selection": "#5E81AC",
+		"table_active": "#434C5E",
+		"table_head": "#2E3440",
+		"table_head_foreground": "#D08770",
+		"table_active_border": "#D08770",
+		"table_row_border": "#4C566A",
+		"sidebar_border": "#4C566A",
+		"sidebar_accent": "#D08770",
+		"title_bar_border": "#4C566A"
+	}
+}
