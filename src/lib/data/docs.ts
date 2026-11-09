@@ -17,6 +17,11 @@ export const groups: { label: string; pages: DocPage[] }[] = [
 		label: 'Using Sonora',
 		pages: [
 			{
+				slug: 'links',
+				title: 'Opening links',
+				summary: 'Opening music links from search, your browser or another app.'
+			},
+			{
 				slug: 'providers',
 				title: 'Providers',
 				summary:
