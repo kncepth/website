@@ -17,11 +17,6 @@ export const groups: { label: string; pages: DocPage[] }[] = [
 		label: 'Using Sonora',
 		pages: [
 			{
-				slug: 'links',
-				title: 'Opening links',
-				summary: 'Opening music links from search, your browser or another app.'
-			},
-			{
 				slug: 'providers',
 				title: 'Providers',
 				summary:
@@ -57,6 +52,11 @@ export const groups: { label: string; pages: DocPage[] }[] = [
 				slug: 'scrobbling',
 				title: 'Scrobbling',
 				summary: 'Linking Last.fm, Libre.fm, ListenBrainz and Maloja, and when a play counts.'
+			},
+			{
+				slug: 'links',
+				title: 'Opening links',
+				summary: 'Opening music links from search, your browser or another app.'
 			}
 		]
 	},

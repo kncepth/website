@@ -28,9 +28,9 @@
 </p>
 <p>
 	For links to your active provider, suggestions show the linked item and matches for its title or
-	artist name. Press <kbd>Enter</kbd>, click Search, or choose <strong>Search for …</strong> to see
-	full results for that name. The <strong>Open link in Sonora</strong> action appears before the name
-	search and remains available while metadata loads or for a different provider.
+	artist name. Press <kbd>Enter</kbd> or click Search to see full results for that name. The
+	<strong>Open link in Sonora</strong> action remains available while metadata loads or for a different
+	provider.
 </p>
 <p>
 	YouTube Music links such as <code>https://music.youtube.com/channel/UC…</code> open an artist
