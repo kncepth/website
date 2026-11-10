@@ -1,0 +1,27 @@
+{
+	"name": "Pastel Bloom Dark",
+	"author": "kncepth",
+	"version": 1,
+	"theme": {
+		"background": "#262222",
+		"foreground": "#FFF9D6",
+		"sidebar": "#2E2929",
+		"popover": "#363030",
+		"secondary": "#2E2929",
+		"muted": "#1C1919",
+		"muted_foreground": "#D8A2A2",
+		"border": "#4A4040",
+		"primary": "#8EA66B",
+		"primary_foreground": "#262222",
+		"progress_bar": "#8EA66B",
+		"selection": "#D8A2A2",
+		"table_active": "#363030",
+		"table_head": "#262222",
+		"table_head_foreground": "#8EA66B",
+		"table_active_border": "#8EA66B",
+		"table_row_border": "#4A4040",
+		"sidebar_border": "#4A4040",
+		"sidebar_accent": "#8EA66B",
+		"title_bar_border": "#4A4040"
+	}
+}

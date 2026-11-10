@@ -1,0 +1,27 @@
+{
+	"name": "Pastel Bloom OLED",
+	"author": "kncepth",
+	"version": 1,
+	"theme": {
+		"background": "#000000",
+		"foreground": "#FFF9D6",
+		"sidebar": "#0D0B0B",
+		"popover": "#141111",
+		"secondary": "#0D0B0B",
+		"muted": "#1A1515",
+		"muted_foreground": "#D8A2A2",
+		"border": "#2A2424",
+		"primary": "#8EA66B",
+		"primary_foreground": "#000000",
+		"progress_bar": "#8EA66B",
+		"selection": "#D8A2A2",
+		"table_active": "#141111",
+		"table_head": "#000000",
+		"table_head_foreground": "#8EA66B",
+		"table_active_border": "#8EA66B",
+		"table_row_border": "#2A2424",
+		"sidebar_border": "#2A2424",
+		"sidebar_accent": "#8EA66B",
+		"title_bar_border": "#2A2424"
+	}
+}

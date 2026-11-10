@@ -1,0 +1,27 @@
+{
+	"name": "Pastel Bloom Light",
+	"author": "kncepth",
+	"version": 1,
+	"theme": {
+		"background": "#FFF9D6",
+		"foreground": "#2E2A2A",
+		"sidebar": "#FFDCDC",
+		"popover": "#FFFFFF",
+		"secondary": "#FFDCDC",
+		"muted": "#F2E6D8",
+		"muted_foreground": "#6B5E5E",
+		"border": "#D8A2A2",
+		"primary": "#8EA66B",
+		"primary_foreground": "#FFFFFF",
+		"progress_bar": "#8EA66B",
+		"selection": "#D8A2A2",
+		"table_active": "#FFDCDC",
+		"table_head": "#FFF9D6",
+		"table_head_foreground": "#8EA66B",
+		"table_active_border": "#8EA66B",
+		"table_row_border": "#EADCD1",
+		"sidebar_border": "#EADCD1",
+		"sidebar_accent": "#8EA66B",
+		"title_bar_border": "#EADCD1"
+	}
+}
